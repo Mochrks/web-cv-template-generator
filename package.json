@@ -6,7 +6,9 @@
     "dev": "next dev --turbopack",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "eslint . --ext js,jsx --report-unused-disable-directives --max-warnings 0",
+    "format": "prettier --write .",
+    "prepare": "husky install"
   },
   "dependencies": {
     "@emotion/react": "^11.13.3",
@@ -31,6 +33,8 @@
     "tesseract.js": "^5.1.1"
   },
   "devDependencies": {
+    "@commitlint/cli": "^20.3.0",
+    "@commitlint/config-conventional": "^20.3.0",
     "@types/axios": "^0.9.36",
     "@types/formidable": "^3.4.5",
     "@types/node": "^20",
@@ -39,8 +43,20 @@
     "@types/react-dom": "^18",
     "eslint": "^8",
     "eslint-config-next": "15.0.2",
+    "husky": "^9.1.7",
+    "lint-staged": "^16.2.7",
     "postcss": "^8",
+    "prettier": "^3.7.4",
     "tailwindcss": "^3.4.1",
     "typescript": "^5"
+  },
+  "lint-staged": {
+    "*.{js,jsx,ts,tsx}": [
+      "prettier --write",
+      "eslint --fix"
+    ],
+    "*.{json,css,scss,md}": [
+      "prettier --write"
+    ]
   }
 }
