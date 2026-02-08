@@ -1,74 +1,54 @@
-import React from 'react';
-import {
-    Box,
-    Tooltip,
-    Fab,
-} from '@mui/material';
-import PrintIcon from '@mui/icons-material/Print';
-// import PictureAsPdfIcon from '@mui/icons-material/PictureAsPdf';
+import React from "react";
+import { Button } from "@/components/ui/button";
+import { Printer } from "lucide-react";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 const Print = () => {
+  const handlePrintDocument = () => {
+    window.print();
+  };
 
-    const handlePrintDocument = () => {
-        window.print();
-    };
+  return (
+    <>
+      <div className="fixed bottom-24 right-6 z-50 flex flex-row gap-2 no-print">
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                size="icon"
+                className="h-14 w-14 rounded-full shadow-lg hover:scale-110 transition-transform bg-secondary text-secondary-foreground"
+                onClick={handlePrintDocument}
+              >
+                <Printer className="h-6 w-6" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>Print CV</p>
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
+      </div>
 
-    // const handleExportToPDF = () => {
-    //     window.print();
-    // };
-
-    return (
-        <>
-            <Box
-                sx={{
-                    position: 'fixed',
-                    bottom: 20,
-                    right: 20,
-                    zIndex: 1000,
-                    display: 'flex',
-                    flexDirection: 'row',
-                    gap: 1,
-                }}
-                className="no-print"
-            >
-                <Tooltip
-                    title="Print"
-                    arrow
-                >
-                    <Fab
-                        color="primary"
-                        onClick={handlePrintDocument}
-                    >
-                        <PrintIcon />
-                    </Fab>
-                </Tooltip>
-
-                {/* <Tooltip
-                    title="Export to PDF"
-                    arrow
-                >
-                    <Fab
-                        color="secondary"
-                        onClick={handleExportToPDF}
-                    >
-                        <PictureAsPdfIcon />
-                    </Fab>
-                </Tooltip> */}
-            </Box>
-
-            {/* CSS print */}
-            <style>
-                {`
-                    @media print {
-                        @page {
-                            size: A5;
-                        }
-                        
+      <style
+        dangerouslySetInnerHTML={{
+          __html: `
+                @media print {
+                    @page {
+                        size: A4;
+                        margin: 0;
                     }
-                `}
-            </style>
-        </>
-    );
+                    body {
+                        background: white;
+                    }
+                    .no-print {
+                        display: none !important;
+                    }
+                }
+            `,
+        }}
+      />
+    </>
+  );
 };
 
 export default Print;
