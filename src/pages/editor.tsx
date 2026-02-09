@@ -59,7 +59,9 @@ const EditorPage: React.FC = () => {
     try {
       const { pdf } = await import("@react-pdf/renderer");
       const ATSMinimalPDF = (await import("@/components/templates/pdf/ATSMinimalPDF")).default;
-      const blob = await pdf(React.createElement(ATSMinimalPDF, { data: resume.data })).toBlob();
+      const blob = await pdf(
+        React.createElement(ATSMinimalPDF, { data: resume.data }) as any // eslint-disable-line @typescript-eslint/no-explicit-any
+      ).toBlob();
       saveAs(blob, `${resume.data.personalInfo.fullName?.replace(/\s+/g, "_") || "Resume"}_CV.pdf`);
     } catch (error) {
       console.error("PDF Export Error:", error);

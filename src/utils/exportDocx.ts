@@ -1,4 +1,12 @@
-import { Document, Packer, Paragraph, TextRun, HeadingLevel, AlignmentType } from "docx";
+import {
+  Document,
+  Packer,
+  Paragraph,
+  TextRun,
+  HeadingLevel,
+  AlignmentType,
+  BorderStyle,
+} from "docx";
 import { saveAs } from "file-saver";
 import { ResumeData } from "@/types/resume";
 
@@ -44,7 +52,7 @@ export const exportToDocx = async (data: ResumeData) => {
                 new Paragraph({ text: "", spacing: { before: 200 } }),
                 new Paragraph({
                   children: [new TextRun({ text: personalInfo.summary, size: 22 })],
-                  alignment: AlignmentType.JUSTIFY,
+                  alignment: AlignmentType.JUSTIFIED,
                 }),
               ]
             : []),
@@ -56,7 +64,9 @@ export const exportToDocx = async (data: ResumeData) => {
                   text: "PROFESSIONAL EXPERIENCE",
                   heading: HeadingLevel.HEADING_1,
                   spacing: { before: 400, after: 200 },
-                  border: { bottom: { color: "auto", space: 1, value: "single", size: 6 } },
+                  border: {
+                    bottom: { color: "auto", space: 1, style: BorderStyle.SINGLE, size: 6 },
+                  },
                 }),
                 ...experiences.flatMap((exp) => [
                   new Paragraph({
@@ -99,7 +109,9 @@ export const exportToDocx = async (data: ResumeData) => {
                   text: "EDUCATION",
                   heading: HeadingLevel.HEADING_1,
                   spacing: { before: 400, after: 200 },
-                  border: { bottom: { color: "auto", space: 1, value: "single", size: 6 } },
+                  border: {
+                    bottom: { color: "auto", space: 1, style: BorderStyle.SINGLE, size: 6 },
+                  },
                 }),
                 ...education.flatMap((edu) => [
                   new Paragraph({
@@ -133,7 +145,9 @@ export const exportToDocx = async (data: ResumeData) => {
                   text: "SKILLS",
                   heading: HeadingLevel.HEADING_1,
                   spacing: { before: 400, after: 200 },
-                  border: { bottom: { color: "auto", space: 1, value: "single", size: 6 } },
+                  border: {
+                    bottom: { color: "auto", space: 1, style: BorderStyle.SINGLE, size: 6 },
+                  },
                 }),
                 ...skills.map(
                   (skillGroup) =>
@@ -154,7 +168,9 @@ export const exportToDocx = async (data: ResumeData) => {
                   text: "PROJECTS",
                   heading: HeadingLevel.HEADING_1,
                   spacing: { before: 400, after: 200 },
-                  border: { bottom: { color: "auto", space: 1, value: "single", size: 6 } },
+                  border: {
+                    bottom: { color: "auto", space: 1, style: BorderStyle.SINGLE, size: 6 },
+                  },
                 }),
                 ...projects.flatMap((proj) => [
                   new Paragraph({
@@ -189,7 +205,9 @@ export const exportToDocx = async (data: ResumeData) => {
                   text: "CERTIFICATIONS",
                   heading: HeadingLevel.HEADING_1,
                   spacing: { before: 400, after: 200 },
-                  border: { bottom: { color: "auto", space: 1, value: "single", size: 6 } },
+                  border: {
+                    bottom: { color: "auto", space: 1, style: BorderStyle.SINGLE, size: 6 },
+                  },
                 }),
                 ...certifications.map(
                   (cert) =>
