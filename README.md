@@ -6,7 +6,7 @@
 
 ### Project Overview
 
-An intelligent CV template generator that leverages AI to create professional, personalized resumes with smart content generation and dynamic formatting. The application provides an intuitive interface for users to craft compelling CVs using advanced AI technologies.
+An intelligent CV template generator that leverages AI to create professionals, personalized resumes with smart content generation and dynamic formatting. The application provides an intuitive interface for users to craft compelling CVs using advanced AI technologies.
 
 ### Tech Stack & Dependencies
 ![Next.js](https://img.shields.io/badge/Next.js-000000?style=flat-square&logo=next.js&logoColor=white)
