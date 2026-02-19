@@ -10,6 +10,9 @@ export const config = {
   },
 };
 
+// Vercel Serverless Function configuration
+export const maxDuration = 60; // Increase to 60 seconds
+
 interface ExtractedData {
   personalInfo: {
     fullName: string;

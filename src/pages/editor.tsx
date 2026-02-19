@@ -3,7 +3,7 @@ import { useRouter } from "next/router";
 import { useResumeStore } from "@/store/useResumeStore";
 import { useTemplateStore } from "@/store/useTemplateStore";
 import ATSMinimal from "@/components/templates/templates/ATSMinimal";
-import { Experience, Education, Skill, Project } from "@/types/resume";
+import { Experience, Education, Skill, Project, Certification } from "@/types/resume";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -43,6 +43,7 @@ import {
   Printer,
   FileDown,
   Loader2,
+  Award,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -337,6 +338,32 @@ const EditorPage: React.FC = () => {
           ? { ...proj, highlights: proj.highlights.filter((_, i) => i !== index) }
           : proj
       ),
+    });
+  };
+
+  // Certification handlers
+  const addCertification = () => {
+    const newCert: Certification = {
+      id: Date.now().toString(),
+      name: "",
+      issuer: "",
+      date: "",
+      credentialId: "",
+    };
+    updateData({ certifications: [...(resume.data.certifications || []), newCert] });
+  };
+
+  const updateCertification = (id: string, field: keyof Certification, value: unknown) => {
+    updateData({
+      certifications: (resume.data.certifications || []).map((cert) =>
+        cert.id === id ? { ...cert, [field]: value } : cert
+      ),
+    });
+  };
+
+  const deleteCertification = (id: string) => {
+    updateData({
+      certifications: (resume.data.certifications || []).filter((cert) => cert.id !== id),
     });
   };
 
@@ -1004,6 +1031,100 @@ const EditorPage: React.FC = () => {
                     >
                       <Plus className="h-5 w-5 mr-2" />
                       Add Project
+                    </Button>
+                  </div>
+                </AccordionContent>
+              </AccordionItem>
+
+              {/* Certifications Section */}
+              <AccordionItem
+                value="certifications"
+                className="border rounded-xl bg-white overflow-hidden"
+              >
+                <AccordionTrigger className="px-6 hover:no-underline hover:bg-slate-50/50">
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 bg-orange-50 rounded-lg">
+                      <Award className="h-5 w-5 text-orange-600" />
+                    </div>
+                    <span className="font-bold text-slate-900">Certifications</span>
+                    <Badge variant="secondary" className="ml-2 bg-slate-100">
+                      {(resume.data.certifications || []).length}
+                    </Badge>
+                  </div>
+                </AccordionTrigger>
+                <AccordionContent className="p-6 pt-0 border-t border-slate-100 bg-white">
+                  <div className="space-y-6 pt-6">
+                    {(resume.data.certifications || []).map((cert, idx) => (
+                      <Card key={cert.id} className="relative group border-slate-200">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="absolute top-4 right-4 text-slate-400 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity"
+                          onClick={() => deleteCertification(cert.id)}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                        <CardHeader className="p-5 pb-2">
+                          <CardTitle className="text-sm font-medium text-slate-500 uppercase tracking-wider">
+                            Certification #{idx + 1}
+                          </CardTitle>
+                        </CardHeader>
+                        <CardContent className="p-5 space-y-4">
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <div className="sm:col-span-2 space-y-2">
+                              <Label>Certification Name</Label>
+                              <Input
+                                value={cert.name}
+                                onChange={(e) =>
+                                  updateCertification(cert.id, "name", e.target.value)
+                                }
+                                placeholder="AWS Certified Solutions Architect"
+                              />
+                            </div>
+                            <div className="space-y-2">
+                              <Label>Issuer</Label>
+                              <Input
+                                value={cert.issuer}
+                                onChange={(e) =>
+                                  updateCertification(cert.id, "issuer", e.target.value)
+                                }
+                                placeholder="Amazon Web Services"
+                              />
+                            </div>
+                            <div className="space-y-2">
+                              <Label>Date</Label>
+                              <Input
+                                value={cert.date}
+                                onChange={(e) =>
+                                  updateCertification(cert.id, "date", e.target.value)
+                                }
+                                placeholder="May 2024"
+                              />
+                            </div>
+                            <div className="sm:col-span-2 space-y-2">
+                              <Label>Credential ID / URL (Optional)</Label>
+                              <div className="flex items-center gap-2">
+                                <Link className="h-4 w-4 text-slate-400" />
+                                <Input
+                                  value={cert.credentialId}
+                                  onChange={(e) =>
+                                    updateCertification(cert.id, "credentialId", e.target.value)
+                                  }
+                                  placeholder="Credential ID or URL"
+                                />
+                              </div>
+                            </div>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    ))}
+                    <Button
+                      variant="outline"
+                      className="w-full py-8 border-dashed"
+                      onClick={addCertification}
+                    >
+                      <Plus className="h-5 w-5 mr-2" />
+                      Add Certification
                     </Button>
                   </div>
                 </AccordionContent>

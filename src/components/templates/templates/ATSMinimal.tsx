@@ -12,7 +12,14 @@ interface ATSMinimalProps {
  * Now using pure HTML/Tailwind instead of MUI
  */
 const ATSMinimal: React.FC<ATSMinimalProps> = ({ data }) => {
-  const { personalInfo, experiences, education, skills, projects, certifications } = data;
+  const {
+    personalInfo,
+    experiences = [],
+    education = [],
+    skills = [],
+    projects = [],
+    certifications = [],
+  } = data;
 
   return (
     <div className="max-w-[8.5in] min-h-[11in] mx-auto p-[0.75in] bg-white text-black font-['Arial',sans-serif] text-[11pt] leading-relaxed">
@@ -146,6 +153,20 @@ const ATSMinimal: React.FC<ATSMinimalProps> = ({ data }) => {
               <p className="text-[10pt]">
                 <strong>{cert.name}</strong> - {cert.issuer} ({cert.date})
               </p>
+              {cert.credentialId && (
+                <a
+                  href={
+                    cert.credentialId.startsWith("http")
+                      ? cert.credentialId
+                      : `https://${cert.credentialId}`
+                  }
+                  target="_blank"
+                  rel="noreferrer"
+                  className="text-[9pt] text-blue-600 underline block mt-0.5"
+                >
+                  {cert.credentialId}
+                </a>
+              )}
             </div>
           ))}
         </div>

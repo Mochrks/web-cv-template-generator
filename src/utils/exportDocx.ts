@@ -6,12 +6,20 @@ import {
   HeadingLevel,
   AlignmentType,
   BorderStyle,
+  ExternalHyperlink,
 } from "docx";
 import { saveAs } from "file-saver";
 import { ResumeData } from "@/types/resume";
 
 export const exportToDocx = async (data: ResumeData) => {
-  const { personalInfo, experiences, education, skills, projects, certifications } = data;
+  const {
+    personalInfo,
+    experiences = [],
+    education = [],
+    skills = [],
+    projects = [],
+    certifications = [],
+  } = data;
 
   const doc = new Document({
     sections: [
@@ -209,15 +217,34 @@ export const exportToDocx = async (data: ResumeData) => {
                     bottom: { color: "auto", space: 1, style: BorderStyle.SINGLE, size: 6 },
                   },
                 }),
-                ...certifications.map(
-                  (cert) =>
-                    new Paragraph({
-                      children: [
-                        new TextRun({ text: cert.name, bold: true }),
-                        new TextRun({ text: ` - ${cert.issuer} (${cert.date})` }),
-                      ],
-                    })
-                ),
+                ...certifications.flatMap((cert) => [
+                  new Paragraph({
+                    children: [
+                      new TextRun({ text: cert.name, bold: true }),
+                      new TextRun({ text: ` - ${cert.issuer} (${cert.date})` }),
+                    ],
+                  }),
+                  ...(cert.credentialId
+                    ? [
+                        new Paragraph({
+                          children: [
+                            new ExternalHyperlink({
+                              children: [
+                                new TextRun({
+                                  text: cert.credentialId,
+                                  style: "Hyperlink",
+                                }),
+                              ],
+                              link: cert.credentialId.startsWith("http")
+                                ? cert.credentialId
+                                : `https://${cert.credentialId}`,
+                            }),
+                          ],
+                          spacing: { before: 50 },
+                        }),
+                      ]
+                    : []),
+                ]),
               ]
             : []),
         ],

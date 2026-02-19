@@ -1,5 +1,5 @@
 import React from "react";
-import { Page, Text, View, Document, StyleSheet } from "@react-pdf/renderer";
+import { Page, Text, View, Document, StyleSheet, Link } from "@react-pdf/renderer";
 import { ResumeData } from "@/types/resume";
 
 // Create styles
@@ -85,7 +85,14 @@ interface ATSMinimalPDFProps {
 }
 
 const ATSMinimalPDF: React.FC<ATSMinimalPDFProps> = ({ data }) => {
-  const { personalInfo, experiences, education, skills, projects, certifications } = data;
+  const {
+    personalInfo,
+    experiences = [],
+    education = [],
+    skills = [],
+    projects = [],
+    certifications = [],
+  } = data;
 
   return (
     <Document>
@@ -192,13 +199,27 @@ const ATSMinimalPDF: React.FC<ATSMinimalPDFProps> = ({ data }) => {
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>Certifications</Text>
             {certifications.map((cert) => (
-              <Text key={cert.id}>
-                <Text style={{ fontWeight: "bold" }}>{cert.name}</Text>
+              <View key={cert.id} style={{ marginBottom: 4 }}>
                 <Text>
-                  {" "}
-                  - {cert.issuer} ({cert.date})
+                  <Text style={{ fontWeight: "bold" }}>{cert.name}</Text>
+                  <Text>
+                    {" "}
+                    - {cert.issuer} ({cert.date})
+                  </Text>
                 </Text>
-              </Text>
+                {cert.credentialId && (
+                  <Link
+                    src={
+                      cert.credentialId.startsWith("http")
+                        ? cert.credentialId
+                        : `https://${cert.credentialId}`
+                    }
+                    style={{ fontSize: 9, color: "blue", textDecoration: "underline" }}
+                  >
+                    {cert.credentialId}
+                  </Link>
+                )}
+              </View>
             ))}
           </View>
         )}
