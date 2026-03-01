@@ -70,18 +70,18 @@ const TemplateSelection: React.FC = () => {
           </Button>
 
           <div className="space-y-2">
-            <h1 className="text-4xl font-bold text-slate-900 tracking-tight">
+            <h1 className="text-3xl md:text-4xl font-bold text-slate-900 tracking-tight">
               Choose Your Template
             </h1>
-            <p className="text-lg text-slate-600 flex items-center gap-2">
-              <Sparkles className="h-5 w-5 text-amber-500" />
-              Select a professional, ATS-optimized layout for your new resume
+            <p className="text-base md:text-lg text-slate-600 flex items-start sm:items-center gap-2">
+              <Sparkles className="h-5 w-5 text-amber-500 shrink-0 mt-0.5 sm:mt-0" />
+              <span>Select a professional, ATS-optimized layout for your new resume</span>
             </p>
           </div>
         </div>
 
         {/* Template Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
           {TEMPLATES.map((template) => (
             <Card
               key={template.id}
@@ -152,7 +152,7 @@ const TemplateSelection: React.FC = () => {
         </div>
 
         {/* Fixed Bottom Bar */}
-        <div className="fixed bottom-0 left-0 right-0 bg-white/80 backdrop-blur-md border-t border-slate-200 p-6 shadow-2xl z-50">
+        <div className="fixed bottom-0 left-0 right-0 bg-white/80 backdrop-blur-md border-t border-slate-200 p-4 sm:p-6 shadow-2xl z-50">
           <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
             <div className="flex items-center gap-4">
               <div className="h-12 w-12 rounded-lg bg-slate-100 flex items-center justify-center border border-slate-200">

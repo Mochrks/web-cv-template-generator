@@ -74,10 +74,10 @@ const LandingPage: React.FC = () => {
       <div className="max-w-4xl w-full space-y-8">
         {/* Header */}
         <div className="text-center space-y-4">
-          <h1 className="text-6xl font-bold bg-gradient-to-r from-blue-600 to-violet-600 bg-clip-text text-transparent">
+          <h1 className="text-4xl md:text-6xl font-bold bg-gradient-to-r from-blue-600 to-violet-600 bg-clip-text text-transparent px-2">
             ATS CV Generator
           </h1>
-          <p className="text-xl text-slate-600 max-w-2xl mx-auto">
+          <p className="text-lg md:text-xl text-slate-600 max-w-2xl mx-auto px-4">
             Upload your CV and let AI transform it into an ATS-optimized resume in seconds
           </p>
         </div>
@@ -88,7 +88,7 @@ const LandingPage: React.FC = () => {
             <div
               {...getRootProps()}
               className={`
-                p-16 text-center cursor-pointer transition-all duration-200
+                p-8 md:p-16 text-center cursor-pointer transition-all duration-200
                 ${isDragActive ? "bg-blue-50 border-blue-500" : "hover:bg-slate-50"}
                 ${uploading ? "opacity-50 cursor-not-allowed" : ""}
               `}
@@ -171,7 +171,7 @@ const LandingPage: React.FC = () => {
         </div>
 
         {/* Features */}
-        <div className="grid grid-cols-3 gap-6 pt-4">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 pt-4">
           <Card className="text-center hover:shadow-lg transition-shadow">
             <CardHeader>
               <div className="mx-auto mb-2 p-3 bg-blue-100 rounded-full w-fit">
@@ -201,6 +201,21 @@ const LandingPage: React.FC = () => {
               <CardDescription>100% compatible</CardDescription>
             </CardHeader>
           </Card>
+        </div>
+
+        {/* Footer */}
+        <div className="pt-8 pb-2 text-center text-slate-500 text-sm">
+          <p>
+            &copy; {new Date().getFullYear()} ATS CV Generator. Created by{" "}
+            <a
+              href="https://github.com/mochrks"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="font-medium text-blue-600 hover:text-blue-700 hover:underline transition-colors"
+            >
+              MOCHRKS
+            </a>
+          </p>
         </div>
       </div>
     </div>

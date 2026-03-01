@@ -62,6 +62,24 @@ export interface Language {
   proficiency: "Native" | "Fluent" | "Professional" | "Intermediate" | "Basic";
 }
 
+export interface Organization {
+  id: string;
+  name: string;
+  role: string;
+  startDate: string;
+  endDate: string;
+  description: string;
+}
+
+export interface Publication {
+  id: string;
+  title: string;
+  publisher: string;
+  date: string;
+  link: string;
+  description: string;
+}
+
 export interface ResumeData {
   personalInfo: PersonalInfo;
   experiences: Experience[];
@@ -70,6 +88,8 @@ export interface ResumeData {
   projects: Project[];
   certifications: Certification[];
   languages: Language[];
+  organizations: Organization[];
+  publications: Publication[];
 }
 
 export interface ResumeMetadata {

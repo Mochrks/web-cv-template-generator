@@ -3,7 +3,15 @@ import { useRouter } from "next/router";
 import { useResumeStore } from "@/store/useResumeStore";
 import { useTemplateStore } from "@/store/useTemplateStore";
 import ATSMinimal from "@/components/templates/templates/ATSMinimal";
-import { Experience, Education, Skill, Project, Certification } from "@/types/resume";
+import {
+  Experience,
+  Education,
+  Skill,
+  Project,
+  Certification,
+  Organization,
+  Publication,
+} from "@/types/resume";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -44,6 +52,8 @@ import {
   FileDown,
   Loader2,
   Award,
+  Users,
+  BookOpen,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -367,25 +377,81 @@ const EditorPage: React.FC = () => {
     });
   };
 
+  // Organization handlers
+  const addOrganization = () => {
+    const newOrg: Organization = {
+      id: Date.now().toString(),
+      name: "",
+      role: "",
+      startDate: "",
+      endDate: "",
+      description: "",
+    };
+    updateData({ organizations: [...(resume.data.organizations || []), newOrg] });
+  };
+
+  const updateOrganization = (id: string, field: keyof Organization, value: unknown) => {
+    updateData({
+      organizations: (resume.data.organizations || []).map((org) =>
+        org.id === id ? { ...org, [field]: value } : org
+      ),
+    });
+  };
+
+  const deleteOrganization = (id: string) => {
+    updateData({
+      organizations: (resume.data.organizations || []).filter((org) => org.id !== id),
+    });
+  };
+
+  // Publication handlers
+  const addPublication = () => {
+    const newPub: Publication = {
+      id: Date.now().toString(),
+      title: "",
+      publisher: "",
+      date: "",
+      link: "",
+      description: "",
+    };
+    updateData({ publications: [...(resume.data.publications || []), newPub] });
+  };
+
+  const updatePublication = (id: string, field: keyof Publication, value: unknown) => {
+    updateData({
+      publications: (resume.data.publications || []).map((pub) =>
+        pub.id === id ? { ...pub, [field]: value } : pub
+      ),
+    });
+  };
+
+  const deletePublication = (id: string) => {
+    updateData({
+      publications: (resume.data.publications || []).filter((pub) => pub.id !== id),
+    });
+  };
+
   return (
     <div className="min-h-screen bg-slate-50 flex flex-col">
       {/* Top Navigation */}
-      <header className="sticky top-0 z-50 bg-white/80 backdrop-blur-md border-b border-slate-200 px-6 py-3 flex items-center justify-between shadow-sm no-print">
-        <div className="flex items-center gap-4">
+      <header className="sticky top-0 z-50 bg-white/80 backdrop-blur-md border-b border-slate-200 px-4 md:px-6 py-3 flex flex-wrap items-center justify-between shadow-sm no-print gap-3 md:gap-0">
+        <div className="flex items-center gap-3 md:gap-4 order-1">
           <Button
             variant="ghost"
             size="icon"
             onClick={() => router.push("/templates")}
-            className="hover:bg-slate-100 rounded-full"
+            className="hover:bg-slate-100 rounded-full h-8 w-8 md:h-10 md:w-10"
           >
-            <ChevronLeft className="h-5 w-5" />
+            <ChevronLeft className="h-4 w-4 md:h-5 md:w-5" />
           </Button>
           <div className="flex flex-col">
             <div className="flex items-center gap-2">
-              <h1 className="text-lg font-bold text-slate-900 leading-none">Resume Builder</h1>
+              <h1 className="text-base md:text-lg font-bold text-slate-900 leading-none">
+                Resume Builder
+              </h1>
               <Badge
                 variant="outline"
-                className="text-[10px] h-4 px-1.5 uppercase tracking-wider font-bold bg-slate-50"
+                className="text-[10px] h-4 px-1.5 uppercase tracking-wider font-bold bg-slate-50 hidden sm:inline-flex"
               >
                 Draft
               </Badge>
@@ -399,11 +465,14 @@ const EditorPage: React.FC = () => {
           </div>
         </div>
 
-        <div className="hidden md:flex items-center bg-slate-100 p-1 rounded-lg">
+        <div className="flex items-center bg-slate-100 p-1 rounded-lg order-3 md:order-2 w-full md:w-auto justify-center mt-1 md:mt-0">
           <Button
             variant={viewMode === "edit" ? "secondary" : "ghost"}
             size="sm"
-            className={cn("px-3", viewMode === "edit" && "shadow-sm bg-white")}
+            className={cn(
+              "px-3 text-xs md:text-sm flex-1 md:flex-none",
+              viewMode === "edit" && "shadow-sm bg-white"
+            )}
             onClick={() => setViewMode("edit")}
           >
             Edit
@@ -411,7 +480,10 @@ const EditorPage: React.FC = () => {
           <Button
             variant={viewMode === "split" ? "secondary" : "ghost"}
             size="sm"
-            className={cn("px-3", viewMode === "split" && "shadow-sm bg-white")}
+            className={cn(
+              "px-3 text-xs md:text-sm flex-1 md:flex-none",
+              viewMode === "split" && "shadow-sm bg-white"
+            )}
             onClick={() => setViewMode("split")}
           >
             Split
@@ -419,26 +491,39 @@ const EditorPage: React.FC = () => {
           <Button
             variant={viewMode === "preview" ? "secondary" : "ghost"}
             size="sm"
-            className={cn("px-3", viewMode === "preview" && "shadow-sm bg-white")}
+            className={cn(
+              "px-3 text-xs md:text-sm flex-1 md:flex-none",
+              viewMode === "preview" && "shadow-sm bg-white"
+            )}
             onClick={() => setViewMode("preview")}
           >
             Preview
           </Button>
         </div>
 
-        <div className="flex items-center gap-2">
-          <Button variant="outline" size="sm" disabled={!canUndo} onClick={undo} className="h-9">
-            <Undo2 className="h-4 w-4 mr-2" />
-            Undo
+        <div className="flex items-center gap-2 order-2 md:order-3">
+          <Button
+            variant="outline"
+            size="sm"
+            disabled={!canUndo}
+            onClick={undo}
+            className="h-8 md:h-9 px-2 md:px-3 text-xs md:text-sm"
+          >
+            <Undo2 className="h-3 w-3 md:h-4 md:w-4 md:mr-2" />
+            <span className="hidden md:inline">Undo</span>
           </Button>
 
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button size="sm" className="h-9" disabled={isExporting}>
+              <Button
+                size="sm"
+                className="h-8 md:h-9 px-2 md:px-3 text-xs md:text-sm"
+                disabled={isExporting}
+              >
                 {isExporting ? (
-                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  <Loader2 className="h-3 w-3 md:h-4 md:w-4 mr-1 md:mr-2 animate-spin" />
                 ) : (
-                  <Download className="h-4 w-4 mr-2" />
+                  <Download className="h-3 w-3 md:h-4 md:w-4 md:mr-2 mr-1" />
                 )}
                 Export
               </Button>
@@ -461,13 +546,13 @@ const EditorPage: React.FC = () => {
         </div>
       </header>
 
-      <main className="flex-1 flex overflow-hidden">
+      <main className="flex-1 flex flex-col md:flex-row overflow-hidden">
         {/* Editor Section */}
         <div
           className={cn(
-            "flex-1 overflow-y-auto px-6 py-8 transition-all duration-300",
+            "flex-1 overflow-y-auto px-4 md:px-6 py-4 md:py-8 transition-all duration-300",
             viewMode === "preview" ? "hidden" : "block",
-            viewMode === "split" ? "md:w-1/2" : "w-full max-w-4xl mx-auto"
+            viewMode === "split" ? "w-full md:w-1/2" : "w-full max-w-4xl mx-auto"
           )}
         >
           <div className="space-y-8">
@@ -1036,7 +1121,7 @@ const EditorPage: React.FC = () => {
                 </AccordionContent>
               </AccordionItem>
 
-              {/* Certifications Section */}
+              {/* Licenses & Certifications Section */}
               <AccordionItem
                 value="certifications"
                 className="border rounded-xl bg-white overflow-hidden"
@@ -1046,7 +1131,7 @@ const EditorPage: React.FC = () => {
                     <div className="p-2 bg-orange-50 rounded-lg">
                       <Award className="h-5 w-5 text-orange-600" />
                     </div>
-                    <span className="font-bold text-slate-900">Certifications</span>
+                    <span className="font-bold text-slate-900">Licenses & Certifications</span>
                     <Badge variant="secondary" className="ml-2 bg-slate-100">
                       {(resume.data.certifications || []).length}
                     </Badge>
@@ -1066,13 +1151,13 @@ const EditorPage: React.FC = () => {
                         </Button>
                         <CardHeader className="p-5 pb-2">
                           <CardTitle className="text-sm font-medium text-slate-500 uppercase tracking-wider">
-                            Certification #{idx + 1}
+                            License / Certification #{idx + 1}
                           </CardTitle>
                         </CardHeader>
                         <CardContent className="p-5 space-y-4">
                           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                             <div className="sm:col-span-2 space-y-2">
-                              <Label>Certification Name</Label>
+                              <Label>Name</Label>
                               <Input
                                 value={cert.name}
                                 onChange={(e) =>
@@ -1124,7 +1209,205 @@ const EditorPage: React.FC = () => {
                       onClick={addCertification}
                     >
                       <Plus className="h-5 w-5 mr-2" />
-                      Add Certification
+                      Add License/Certification
+                    </Button>
+                  </div>
+                </AccordionContent>
+              </AccordionItem>
+
+              {/* Organizations Section */}
+              <AccordionItem
+                value="organizations"
+                className="border rounded-xl bg-white overflow-hidden"
+              >
+                <AccordionTrigger className="px-6 hover:no-underline hover:bg-slate-50/50">
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 bg-pink-50 rounded-lg">
+                      <Users className="h-5 w-5 text-pink-600" />
+                    </div>
+                    <span className="font-bold text-slate-900">Organizations</span>
+                    <Badge variant="secondary" className="ml-2 bg-slate-100">
+                      {(resume.data.organizations || []).length}
+                    </Badge>
+                  </div>
+                </AccordionTrigger>
+                <AccordionContent className="p-6 pt-0 border-t border-slate-100 bg-white">
+                  <div className="space-y-6 pt-6">
+                    {(resume.data.organizations || []).map((org, idx) => (
+                      <Card key={org.id} className="relative group border-slate-200">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="absolute top-4 right-4 text-slate-400 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity"
+                          onClick={() => deleteOrganization(org.id)}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                        <CardHeader className="p-5 pb-2">
+                          <CardTitle className="text-sm font-medium text-slate-500 uppercase tracking-wider">
+                            Organization #{idx + 1}
+                          </CardTitle>
+                        </CardHeader>
+                        <CardContent className="p-5 space-y-4">
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <div className="space-y-2">
+                              <Label>Organization Name</Label>
+                              <Input
+                                value={org.name}
+                                onChange={(e) => updateOrganization(org.id, "name", e.target.value)}
+                                placeholder="Student Council / IEEE"
+                              />
+                            </div>
+                            <div className="space-y-2">
+                              <Label>Role</Label>
+                              <Input
+                                value={org.role}
+                                onChange={(e) => updateOrganization(org.id, "role", e.target.value)}
+                                placeholder="President / Volunteer"
+                              />
+                            </div>
+                            <div className="space-y-2">
+                              <Label>Dates</Label>
+                              <div className="grid grid-cols-2 gap-2">
+                                <Input
+                                  placeholder="Jan 2020"
+                                  value={org.startDate}
+                                  onChange={(e) =>
+                                    updateOrganization(org.id, "startDate", e.target.value)
+                                  }
+                                />
+                                <Input
+                                  placeholder="Present"
+                                  value={org.endDate}
+                                  onChange={(e) =>
+                                    updateOrganization(org.id, "endDate", e.target.value)
+                                  }
+                                />
+                              </div>
+                            </div>
+                            <div className="sm:col-span-2 space-y-2">
+                              <Label>Description</Label>
+                              <textarea
+                                className="w-full min-h-[80px] p-3 rounded-lg border border-slate-200 bg-white text-sm focus:ring-2 focus:ring-primary focus:outline-none"
+                                value={org.description}
+                                onChange={(e) =>
+                                  updateOrganization(org.id, "description", e.target.value)
+                                }
+                                placeholder="Description of your activities..."
+                              />
+                            </div>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    ))}
+                    <Button
+                      variant="outline"
+                      className="w-full py-8 border-dashed"
+                      onClick={addOrganization}
+                    >
+                      <Plus className="h-5 w-5 mr-2" />
+                      Add Organization
+                    </Button>
+                  </div>
+                </AccordionContent>
+              </AccordionItem>
+
+              {/* Publications Section */}
+              <AccordionItem
+                value="publications"
+                className="border rounded-xl bg-white overflow-hidden"
+              >
+                <AccordionTrigger className="px-6 hover:no-underline hover:bg-slate-50/50">
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 bg-teal-50 rounded-lg">
+                      <BookOpen className="h-5 w-5 text-teal-600" />
+                    </div>
+                    <span className="font-bold text-slate-900">Publications</span>
+                    <Badge variant="secondary" className="ml-2 bg-slate-100">
+                      {(resume.data.publications || []).length}
+                    </Badge>
+                  </div>
+                </AccordionTrigger>
+                <AccordionContent className="p-6 pt-0 border-t border-slate-100 bg-white">
+                  <div className="space-y-6 pt-6">
+                    {(resume.data.publications || []).map((pub, idx) => (
+                      <Card key={pub.id} className="relative group border-slate-200">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="absolute top-4 right-4 text-slate-400 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity"
+                          onClick={() => deletePublication(pub.id)}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                        <CardHeader className="p-5 pb-2">
+                          <CardTitle className="text-sm font-medium text-slate-500 uppercase tracking-wider">
+                            Publication #{idx + 1}
+                          </CardTitle>
+                        </CardHeader>
+                        <CardContent className="p-5 space-y-4">
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <div className="sm:col-span-2 space-y-2">
+                              <Label>Title</Label>
+                              <Input
+                                value={pub.title}
+                                onChange={(e) => updatePublication(pub.id, "title", e.target.value)}
+                                placeholder="Journal paper title"
+                              />
+                            </div>
+                            <div className="space-y-2">
+                              <Label>Publisher / Journal</Label>
+                              <Input
+                                value={pub.publisher}
+                                onChange={(e) =>
+                                  updatePublication(pub.id, "publisher", e.target.value)
+                                }
+                                placeholder="IEEE / ACM"
+                              />
+                            </div>
+                            <div className="space-y-2">
+                              <Label>Date</Label>
+                              <Input
+                                value={pub.date}
+                                onChange={(e) => updatePublication(pub.id, "date", e.target.value)}
+                                placeholder="Nov 2023"
+                              />
+                            </div>
+                            <div className="sm:col-span-2 space-y-2">
+                              <Label>Link (Optional)</Label>
+                              <div className="flex items-center gap-2">
+                                <Link className="h-4 w-4 text-slate-400" />
+                                <Input
+                                  value={pub.link}
+                                  onChange={(e) =>
+                                    updatePublication(pub.id, "link", e.target.value)
+                                  }
+                                  placeholder="https://doi.org/10..."
+                                />
+                              </div>
+                            </div>
+                            <div className="sm:col-span-2 space-y-2">
+                              <Label>Description</Label>
+                              <textarea
+                                className="w-full min-h-[80px] p-3 rounded-lg border border-slate-200 bg-white text-sm focus:ring-2 focus:ring-primary focus:outline-none"
+                                value={pub.description}
+                                onChange={(e) =>
+                                  updatePublication(pub.id, "description", e.target.value)
+                                }
+                                placeholder="Summary of the publication..."
+                              />
+                            </div>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    ))}
+                    <Button
+                      variant="outline"
+                      className="w-full py-8 border-dashed"
+                      onClick={addPublication}
+                    >
+                      <Plus className="h-5 w-5 mr-2" />
+                      Add Publication
                     </Button>
                   </div>
                 </AccordionContent>
@@ -1137,8 +1420,10 @@ const EditorPage: React.FC = () => {
         <div
           className={cn(
             "bg-slate-200/50 flex flex-col transition-all duration-300",
-            viewMode === "edit" ? "hidden" : "block",
-            viewMode === "split" ? "md:w-1/2 border-l border-slate-300" : "w-full"
+            viewMode === "edit" ? "hidden" : "flex flex-1 md:flex-none",
+            viewMode === "split"
+              ? "w-full md:w-1/2 border-t md:border-t-0 md:border-l border-slate-300"
+              : "w-full"
           )}
         >
           <div className="p-4 border-b border-slate-300 bg-white/50 backdrop-blur flex items-center justify-between">

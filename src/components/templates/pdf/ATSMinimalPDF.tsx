@@ -92,6 +92,8 @@ const ATSMinimalPDF: React.FC<ATSMinimalPDFProps> = ({ data }) => {
     skills = [],
     projects = [],
     certifications = [],
+    organizations = [],
+    publications = [],
   } = data;
 
   return (
@@ -197,7 +199,7 @@ const ATSMinimalPDF: React.FC<ATSMinimalPDFProps> = ({ data }) => {
         {/* Certifications */}
         {certifications.length > 0 && (
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Certifications</Text>
+            <Text style={styles.sectionTitle}>LICENSE & CERTIFICATION</Text>
             {certifications.map((cert) => (
               <View key={cert.id} style={{ marginBottom: 4 }}>
                 <Text>
@@ -217,6 +219,50 @@ const ATSMinimalPDF: React.FC<ATSMinimalPDFProps> = ({ data }) => {
                     style={{ fontSize: 9, color: "blue", textDecoration: "underline" }}
                   >
                     {cert.credentialId}
+                  </Link>
+                )}
+              </View>
+            ))}
+          </View>
+        )}
+
+        {/* Organizations */}
+        {organizations.length > 0 && (
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Organizations</Text>
+            {organizations.map((org) => (
+              <View key={org.id} style={styles.entry}>
+                <View style={styles.entryHeader}>
+                  <Text style={{ fontWeight: "bold" }}>{org.name}</Text>
+                  <Text>
+                    {org.startDate} - {org.endDate}
+                  </Text>
+                </View>
+                <Text style={styles.entrySubHeader}>{org.role}</Text>
+                {org.description && <Text style={{ fontSize: 9 }}>{org.description}</Text>}
+              </View>
+            ))}
+          </View>
+        )}
+
+        {/* Publications */}
+        {publications.length > 0 && (
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Publications</Text>
+            {publications.map((pub) => (
+              <View key={pub.id} style={styles.entry}>
+                <View style={styles.entryHeader}>
+                  <Text style={{ fontWeight: "bold" }}>{pub.title}</Text>
+                  <Text>{pub.date}</Text>
+                </View>
+                <Text style={styles.entrySubHeader}>{pub.publisher}</Text>
+                {pub.description && <Text style={{ fontSize: 9 }}>{pub.description}</Text>}
+                {pub.link && (
+                  <Link
+                    src={pub.link.startsWith("http") ? pub.link : `https://${pub.link}`}
+                    style={{ fontSize: 9, color: "blue", textDecoration: "underline" }}
+                  >
+                    {pub.link}
                   </Link>
                 )}
               </View>

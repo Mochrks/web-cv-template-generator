@@ -19,6 +19,8 @@ const ATSMinimal: React.FC<ATSMinimalProps> = ({ data }) => {
     skills = [],
     projects = [],
     certifications = [],
+    organizations = [],
+    publications = [],
   } = data;
 
   return (
@@ -145,7 +147,7 @@ const ATSMinimal: React.FC<ATSMinimalProps> = ({ data }) => {
       {certifications.length > 0 && (
         <div className="mb-6">
           <h2 className="text-[12pt] font-bold uppercase mb-2 border-b-2 border-black pb-1">
-            Certifications
+            LICENSE & CERTIFICATION
           </h2>
 
           {certifications.map((cert) => (
@@ -165,6 +167,62 @@ const ATSMinimal: React.FC<ATSMinimalProps> = ({ data }) => {
                   className="text-[9pt] text-blue-600 underline block mt-0.5"
                 >
                   {cert.credentialId}
+                </a>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Organizations */}
+      {organizations.length > 0 && (
+        <div className="mb-6">
+          <h2 className="text-[12pt] font-bold uppercase mb-2 border-b-2 border-black pb-1">
+            Organizations
+          </h2>
+
+          {organizations.map((org) => (
+            <div key={org.id} className="mb-4">
+              <div className="flex justify-between mb-1">
+                <span className="font-bold text-[11pt]">{org.name}</span>
+                <span className="text-[10pt] text-gray-600">
+                  {org.startDate} - {org.endDate}
+                </span>
+              </div>
+              <p className="text-[10pt] italic mb-1 text-gray-600">{org.role}</p>
+              {org.description && (
+                <p className="text-[10pt] text-gray-800 leading-relaxed">{org.description}</p>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Publications */}
+      {publications.length > 0 && (
+        <div className="mb-6">
+          <h2 className="text-[12pt] font-bold uppercase mb-2 border-b-2 border-black pb-1">
+            Publications
+          </h2>
+
+          {publications.map((pub) => (
+            <div key={pub.id} className="mb-4">
+              <div className="flex justify-between mb-1">
+                <span className="font-bold text-[11pt]">{pub.title}</span>
+                <span className="text-[10pt] text-gray-600">{pub.date}</span>
+              </div>
+              <p className="text-[10pt] italic text-gray-600 mb-1">{pub.publisher}</p>
+              {pub.description && (
+                <p className="text-[10pt] text-gray-800 leading-relaxed">{pub.description}</p>
+              )}
+              {pub.link && (
+                <a
+                  href={pub.link.startsWith("http") ? pub.link : `https://${pub.link}`}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="text-[9pt] text-blue-600 underline block mt-0.5"
+                >
+                  {pub.link}
                 </a>
               )}
             </div>

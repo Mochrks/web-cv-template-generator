@@ -55,6 +55,8 @@ const createDefaultResume = (): Resume => ({
     projects: [],
     certifications: [],
     languages: [],
+    organizations: [],
+    publications: [],
   },
 });
 

@@ -19,6 +19,8 @@ export const exportToDocx = async (data: ResumeData) => {
     skills = [],
     projects = [],
     certifications = [],
+    organizations = [],
+    publications = [],
   } = data;
 
   const doc = new Document({
@@ -206,11 +208,11 @@ export const exportToDocx = async (data: ResumeData) => {
               ]
             : []),
 
-          // Certifications
+          // Licenses & Certifications
           ...(certifications.length > 0
             ? [
                 new Paragraph({
-                  text: "CERTIFICATIONS",
+                  text: "LICENSE & CERTIFICATION",
                   heading: HeadingLevel.HEADING_1,
                   spacing: { before: 400, after: 200 },
                   border: {
@@ -244,6 +246,107 @@ export const exportToDocx = async (data: ResumeData) => {
                         }),
                       ]
                     : []),
+                ]),
+              ]
+            : []),
+          // Organizations
+          ...(organizations.length > 0
+            ? [
+                new Paragraph({
+                  text: "ORGANIZATIONS",
+                  heading: HeadingLevel.HEADING_1,
+                  spacing: { before: 400, after: 200 },
+                  border: {
+                    bottom: { color: "auto", space: 1, style: BorderStyle.SINGLE, size: 6 },
+                  },
+                }),
+                ...organizations.flatMap((org) => [
+                  new Paragraph({
+                    children: [
+                      new TextRun({ text: org.name, bold: true, size: 24 }),
+                      new TextRun({
+                        text: `\t${org.startDate} - ${org.endDate}`,
+                        bold: true,
+                      }),
+                    ],
+                    tabStops: [{ type: "right", position: 9000 }],
+                  }),
+                  new Paragraph({
+                    children: [
+                      new TextRun({
+                        text: org.role,
+                        italics: true,
+                        size: 20,
+                      }),
+                    ],
+                    spacing: { after: 100 },
+                  }),
+                  ...(org.description
+                    ? [
+                        new Paragraph({
+                          children: [new TextRun({ text: org.description, size: 20 })],
+                        }),
+                      ]
+                    : []),
+                  new Paragraph({ text: "", spacing: { before: 200 } }),
+                ]),
+              ]
+            : []),
+
+          // Publications
+          ...(publications.length > 0
+            ? [
+                new Paragraph({
+                  text: "PUBLICATIONS",
+                  heading: HeadingLevel.HEADING_1,
+                  spacing: { before: 400, after: 200 },
+                  border: {
+                    bottom: { color: "auto", space: 1, style: BorderStyle.SINGLE, size: 6 },
+                  },
+                }),
+                ...publications.flatMap((pub) => [
+                  new Paragraph({
+                    children: [
+                      new TextRun({ text: pub.title, bold: true, size: 24 }),
+                      new TextRun({ text: `\t${pub.date}`, bold: true }),
+                    ],
+                    tabStops: [{ type: "right", position: 9000 }],
+                  }),
+                  new Paragraph({
+                    children: [
+                      new TextRun({
+                        text: pub.publisher,
+                        italics: true,
+                        size: 20,
+                      }),
+                    ],
+                  }),
+                  ...(pub.description
+                    ? [
+                        new Paragraph({
+                          children: [new TextRun({ text: pub.description, size: 20 })],
+                        }),
+                      ]
+                    : []),
+                  ...(pub.link
+                    ? [
+                        new Paragraph({
+                          children: [
+                            new ExternalHyperlink({
+                              children: [
+                                new TextRun({
+                                  text: pub.link,
+                                  style: "Hyperlink",
+                                }),
+                              ],
+                              link: pub.link.startsWith("http") ? pub.link : `https://${pub.link}`,
+                            }),
+                          ],
+                          spacing: { before: 50 },
+                        }),
+                      ]
+                    : []),
+                  new Paragraph({ text: "", spacing: { before: 200 } }),
                 ]),
               ]
             : []),
