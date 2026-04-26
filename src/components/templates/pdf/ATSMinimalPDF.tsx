@@ -26,20 +26,20 @@ const styles = StyleSheet.create({
     color: "#333333",
   },
   section: {
-    marginTop: 15,
-    marginBottom: 5,
+    marginTop: 12,
+    marginBottom: 4,
   },
   sectionTitle: {
-    fontSize: 12,
+    fontSize: 11,
     fontWeight: "bold",
     textTransform: "uppercase",
     borderBottomWidth: 1,
     borderBottomColor: "#000000",
-    paddingBottom: 2,
-    marginBottom: 8,
+    paddingBottom: 1,
+    marginBottom: 6,
   },
   entry: {
-    marginBottom: 10,
+    marginBottom: 7,
   },
   entryHeader: {
     flexDirection: "row",
@@ -49,13 +49,13 @@ const styles = StyleSheet.create({
   entrySubHeader: {
     fontSize: 9,
     fontStyle: "italic",
-    color: "#444444",
-    marginBottom: 3,
+    color: "#333333",
+    marginBottom: 2,
   },
   bulletPointContainer: {
     flexDirection: "row",
-    marginLeft: 15,
-    marginBottom: 2,
+    marginLeft: 12,
+    marginBottom: 1,
   },
   bulletPoint: {
     width: 10,
@@ -180,7 +180,12 @@ const ATSMinimalPDF: React.FC<ATSMinimalPDFProps> = ({ data }) => {
             <Text style={styles.sectionTitle}>Projects</Text>
             {projects.map((proj) => (
               <View key={proj.id} style={styles.entry}>
-                <Text style={{ fontWeight: "bold" }}>{proj.name}</Text>
+                <View style={styles.entryHeader}>
+                  <Text style={{ fontWeight: "bold" }}>{proj.name}</Text>
+                  <Text>
+                    {proj.startDate} - {proj.endDate}
+                  </Text>
+                </View>
                 <Text style={{ fontSize: 9 }}>{proj.description}</Text>
                 <Text style={{ fontSize: 9, fontStyle: "italic", marginTop: 2 }}>
                   Technologies: {proj.technologies.join(", ")}

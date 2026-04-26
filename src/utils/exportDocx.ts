@@ -36,6 +36,7 @@ export const exportToDocx = async (data: ResumeData) => {
                 text: personalInfo.fullName || "Your Name",
                 bold: true,
                 size: 36,
+                font: "Arial",
               }),
             ],
           }),
@@ -51,7 +52,9 @@ export const exportToDocx = async (data: ResumeData) => {
                 ]
                   .filter(Boolean)
                   .join(" | "),
-                size: 20,
+                size: 18,
+                color: "333333",
+                font: "Arial",
               }),
             ],
           }),
@@ -61,7 +64,7 @@ export const exportToDocx = async (data: ResumeData) => {
             ? [
                 new Paragraph({ text: "", spacing: { before: 200 } }),
                 new Paragraph({
-                  children: [new TextRun({ text: personalInfo.summary, size: 22 })],
+                  children: [new TextRun({ text: personalInfo.summary, size: 20, font: "Arial" })],
                   alignment: AlignmentType.JUSTIFIED,
                 }),
               ]
@@ -73,7 +76,7 @@ export const exportToDocx = async (data: ResumeData) => {
                 new Paragraph({
                   text: "PROFESSIONAL EXPERIENCE",
                   heading: HeadingLevel.HEADING_1,
-                  spacing: { before: 400, after: 200 },
+                  spacing: { before: 240, after: 120 },
                   border: {
                     bottom: { color: "auto", space: 1, style: BorderStyle.SINGLE, size: 6 },
                   },
@@ -94,7 +97,9 @@ export const exportToDocx = async (data: ResumeData) => {
                       new TextRun({
                         text: `${exp.company} | ${exp.location}`,
                         italics: true,
-                        size: 20,
+                        size: 18,
+                        color: "333333",
+                        font: "Arial",
                       }),
                     ],
                     spacing: { after: 100 },
@@ -102,12 +107,11 @@ export const exportToDocx = async (data: ResumeData) => {
                   ...exp.responsibilities.map(
                     (resp) =>
                       new Paragraph({
-                        text: resp,
+                        children: [new TextRun({ text: resp, size: 20 })],
                         bullet: { level: 0 },
-                        spacing: { before: 50 },
+                        spacing: { before: 20, after: 20 },
                       })
                   ),
-                  new Paragraph({ text: "", spacing: { before: 200 } }),
                 ]),
               ]
             : []),
@@ -118,7 +122,7 @@ export const exportToDocx = async (data: ResumeData) => {
                 new Paragraph({
                   text: "EDUCATION",
                   heading: HeadingLevel.HEADING_1,
-                  spacing: { before: 400, after: 200 },
+                  spacing: { before: 240, after: 120 },
                   border: {
                     bottom: { color: "auto", space: 1, style: BorderStyle.SINGLE, size: 6 },
                   },
@@ -141,9 +145,13 @@ export const exportToDocx = async (data: ResumeData) => {
                     ],
                   }),
                   ...(edu.gpa
-                    ? [new Paragraph({ text: `GPA: ${edu.gpa}`, spacing: { after: 100 } })]
+                    ? [
+                        new Paragraph({
+                          children: [new TextRun({ text: `GPA: ${edu.gpa}`, size: 20 })],
+                          spacing: { after: 50 },
+                        }),
+                      ]
                     : []),
-                  new Paragraph({ text: "", spacing: { before: 100 } }),
                 ]),
               ]
             : []),
@@ -154,7 +162,7 @@ export const exportToDocx = async (data: ResumeData) => {
                 new Paragraph({
                   text: "SKILLS",
                   heading: HeadingLevel.HEADING_1,
-                  spacing: { before: 400, after: 200 },
+                  spacing: { before: 240, after: 120 },
                   border: {
                     bottom: { color: "auto", space: 1, style: BorderStyle.SINGLE, size: 6 },
                   },
@@ -177,14 +185,22 @@ export const exportToDocx = async (data: ResumeData) => {
                 new Paragraph({
                   text: "PROJECTS",
                   heading: HeadingLevel.HEADING_1,
-                  spacing: { before: 400, after: 200 },
+                  spacing: { before: 240, after: 120 },
                   border: {
                     bottom: { color: "auto", space: 1, style: BorderStyle.SINGLE, size: 6 },
                   },
                 }),
                 ...projects.flatMap((proj) => [
                   new Paragraph({
-                    children: [new TextRun({ text: proj.name, bold: true, size: 24 })],
+                    children: [
+                      new TextRun({ text: proj.name, bold: true, size: 24, font: "Arial" }),
+                      new TextRun({
+                        text: `\t${proj.startDate} - ${proj.endDate}`,
+                        bold: true,
+                        font: "Arial",
+                      }),
+                    ],
+                    tabStops: [{ type: "right", position: 9000 }],
                   }),
                   new Paragraph({
                     children: [new TextRun({ text: proj.description, size: 20 })],
@@ -199,11 +215,11 @@ export const exportToDocx = async (data: ResumeData) => {
                   ...proj.highlights.map(
                     (high) =>
                       new Paragraph({
-                        text: high,
+                        children: [new TextRun({ text: high, size: 20 })],
                         bullet: { level: 0 },
+                        spacing: { before: 20, after: 20 },
                       })
                   ),
-                  new Paragraph({ text: "", spacing: { before: 200 } }),
                 ]),
               ]
             : []),
@@ -214,7 +230,7 @@ export const exportToDocx = async (data: ResumeData) => {
                 new Paragraph({
                   text: "LICENSE & CERTIFICATION",
                   heading: HeadingLevel.HEADING_1,
-                  spacing: { before: 400, after: 200 },
+                  spacing: { before: 240, after: 120 },
                   border: {
                     bottom: { color: "auto", space: 1, style: BorderStyle.SINGLE, size: 6 },
                   },
@@ -255,7 +271,7 @@ export const exportToDocx = async (data: ResumeData) => {
                 new Paragraph({
                   text: "ORGANIZATIONS",
                   heading: HeadingLevel.HEADING_1,
-                  spacing: { before: 400, after: 200 },
+                  spacing: { before: 240, after: 120 },
                   border: {
                     bottom: { color: "auto", space: 1, style: BorderStyle.SINGLE, size: 6 },
                   },
@@ -299,7 +315,7 @@ export const exportToDocx = async (data: ResumeData) => {
                 new Paragraph({
                   text: "PUBLICATIONS",
                   heading: HeadingLevel.HEADING_1,
-                  spacing: { before: 400, after: 200 },
+                  spacing: { before: 240, after: 120 },
                   border: {
                     bottom: { color: "auto", space: 1, style: BorderStyle.SINGLE, size: 6 },
                   },

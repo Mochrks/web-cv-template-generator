@@ -1,12 +1,14 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import { Resume, ResumeData, ResumeMetadata } from "@/types/resume";
+import { JOHN_DOE_DUMMY } from "@/utils/dummyData";
 
 interface ResumeStore {
   resume: Resume | null;
   setResume: (resume: Resume) => void;
   updateMetadata: (metadata: Partial<ResumeMetadata>) => void;
   updateData: (data: Partial<ResumeData>) => void;
+  loadDummyData: () => void;
   clearResume: () => void;
 
   // Version history
@@ -17,7 +19,7 @@ interface ResumeStore {
 }
 
 // Helper function to generate UUID
-const generateUUID = (): string => {
+export const generateUUID = (): string => {
   if (typeof crypto !== "undefined" && crypto.randomUUID) {
     return crypto.randomUUID();
   }
@@ -29,7 +31,7 @@ const generateUUID = (): string => {
   });
 };
 
-const createDefaultResume = (): Resume => ({
+export const createDefaultResume = (customData?: Partial<ResumeData>): Resume => ({
   metadata: {
     id: generateUUID(),
     templateId: "ats-minimal",
@@ -57,6 +59,7 @@ const createDefaultResume = (): Resume => ({
     languages: [],
     organizations: [],
     publications: [],
+    ...customData,
   },
 });
 
@@ -104,15 +107,9 @@ export const useResumeStore = create<ResumeStore>()(
       updateData: (data) =>
         set((state) => {
           if (!state.resume) {
-            const newResume = createDefaultResume();
+            const newResume = createDefaultResume(data);
             return {
-              resume: {
-                ...newResume,
-                data: {
-                  ...newResume.data,
-                  ...data,
-                },
-              },
+              resume: newResume,
             };
           }
 
@@ -135,6 +132,16 @@ export const useResumeStore = create<ResumeStore>()(
                 version: state.resume.metadata.version + 1,
               },
             },
+          };
+        }),
+
+      loadDummyData: () =>
+        set(() => {
+          const newResume = createDefaultResume(JOHN_DOE_DUMMY);
+          return {
+            resume: newResume,
+            history: [],
+            canUndo: false,
           };
         }),
 

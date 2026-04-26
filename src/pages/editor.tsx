@@ -1,8 +1,6 @@
-import React, { useState } from "react";
-import { useRouter } from "next/router";
+import React, { useState, useEffect } from "react";
 import { useResumeStore } from "@/store/useResumeStore";
 import { useTemplateStore } from "@/store/useTemplateStore";
-import ATSMinimal from "@/components/templates/templates/ATSMinimal";
 import {
   Experience,
   Education,
@@ -12,10 +10,6 @@ import {
   Organization,
   Publication,
 } from "@/types/resume";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Accordion,
   AccordionContent,
@@ -23,46 +17,49 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion";
 import { Badge } from "@/components/ui/badge";
-import { Separator } from "@/components/ui/separator";
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { exportToDocx } from "@/utils/exportDocx";
-import { saveAs } from "file-saver";
-import {
-  Download,
-  Undo2,
-  Plus,
-  Trash2,
   User,
   Briefcase,
   GraduationCap,
   Wrench,
   FolderRoot,
-  Link,
-  ChevronLeft,
-  Monitor,
-  Smartphone,
-  Eye,
-  FileText,
-  Printer,
-  FileDown,
-  Loader2,
   Award,
   Users,
   BookOpen,
+  Loader2,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { saveAs } from "file-saver";
+import { exportToDocx } from "@/utils/exportDocx";
+
+// Components
+import { EditorHeader } from "@/components/editor/EditorHeader";
+import { EditorPreview } from "@/components/editor/EditorPreview";
+
+// Sections
+import { PersonalInfoSection } from "@/components/editor/sections/PersonalInfoSection";
+import { ExperienceSection } from "@/components/editor/sections/ExperienceSection";
+import { EducationSection } from "@/components/editor/sections/EducationSection";
+import { SkillsSection } from "@/components/editor/sections/SkillsSection";
+import { ProjectsSection } from "@/components/editor/sections/ProjectsSection";
+import { CertificationsSection } from "@/components/editor/sections/CertificationsSection";
+import { OrganizationsSection } from "@/components/editor/sections/OrganizationsSection";
+import { PublicationsSection } from "@/components/editor/sections/PublicationsSection";
 
 const EditorPage: React.FC = () => {
-  const router = useRouter();
-  const { resume, updateData, canUndo, undo } = useResumeStore();
+  const { resume, updateData, canUndo, undo, loadDummyData } = useResumeStore();
   const { selectedTemplateId } = useTemplateStore();
   const [viewMode, setViewMode] = useState<"split" | "edit" | "preview">("split");
+  const [previewDevice, setPreviewDevice] = useState<"desktop" | "mobile">("desktop");
   const [isExporting, setIsExporting] = useState(false);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+    if (!resume) {
+      loadDummyData();
+    }
+  }, [resume, loadDummyData]);
 
   const handleExportPDF = async () => {
     if (!resume) return;
@@ -71,7 +68,7 @@ const EditorPage: React.FC = () => {
       const { pdf } = await import("@react-pdf/renderer");
       const ATSMinimalPDF = (await import("@/components/templates/pdf/ATSMinimalPDF")).default;
       const blob = await pdf(
-        React.createElement(ATSMinimalPDF, { data: resume.data }) as any // eslint-disable-line @typescript-eslint/no-explicit-any
+        React.createElement(ATSMinimalPDF, { data: resume.data }) as React.ReactElement
       ).toBlob();
       saveAs(blob, `${resume.data.personalInfo.fullName?.replace(/\s+/g, "_") || "Resume"}_CV.pdf`);
     } catch (error) {
@@ -97,31 +94,30 @@ const EditorPage: React.FC = () => {
     window.print();
   };
 
-  if (!resume) {
+  if (!mounted || !resume) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-slate-50">
-        <Card className="max-w-md w-full p-8 text-center space-y-6">
-          <div className="mx-auto w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center">
-            <User className="h-8 w-8 text-slate-400" />
-          </div>
-          <div className="space-y-2">
-            <h2 className="text-2xl font-bold text-slate-900">No Resume Data Found</h2>
-            <p className="text-slate-500">
-              Please upload your CV or start from scratch to begin editing.
-            </p>
-          </div>
-          <Button onClick={() => router.push("/")} className="w-full">
-            Return to Dashboard
-          </Button>
-        </Card>
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <Loader2 className="h-10 w-10 animate-spin text-primary" />
       </div>
     );
   }
 
-  // Experience handlers
+  // Update helpers
+  const updateExperience = <K extends keyof Experience>(
+    id: string,
+    field: K,
+    value: Experience[K]
+  ) => {
+    updateData({
+      experiences: resume.data.experiences.map((exp) =>
+        exp.id === id ? { ...exp, [field]: value } : exp
+      ),
+    });
+  };
+
   const addExperience = () => {
     const newExp: Experience = {
-      id: Date.now().toString(),
+      id: crypto.randomUUID(),
       company: "",
       position: "",
       location: "",
@@ -133,18 +129,8 @@ const EditorPage: React.FC = () => {
     updateData({ experiences: [...resume.data.experiences, newExp] });
   };
 
-  const updateExperience = (id: string, field: keyof Experience, value: unknown) => {
-    updateData({
-      experiences: resume.data.experiences.map((exp) =>
-        exp.id === id ? { ...exp, [field]: value } : exp
-      ),
-    });
-  };
-
   const deleteExperience = (id: string) => {
-    updateData({
-      experiences: resume.data.experiences.filter((exp) => exp.id !== id),
-    });
+    updateData({ experiences: resume.data.experiences.filter((exp) => exp.id !== id) });
   };
 
   const addResponsibility = (expId: string) => {
@@ -155,49 +141,34 @@ const EditorPage: React.FC = () => {
     });
   };
 
-  const updateResponsibility = (expId: string, index: number, value: string) => {
+  const updateResponsibility = (expId: string, idx: number, value: string) => {
     updateData({
       experiences: resume.data.experiences.map((exp) =>
         exp.id === expId
           ? {
               ...exp,
-              responsibilities: exp.responsibilities.map((r, i) => (i === index ? value : r)),
+              responsibilities: exp.responsibilities.map((r, i) => (i === idx ? value : r)),
             }
           : exp
       ),
     });
   };
 
-  const deleteResponsibility = (expId: string, index: number) => {
+  const deleteResponsibility = (expId: string, idx: number) => {
     updateData({
       experiences: resume.data.experiences.map((exp) =>
         exp.id === expId
-          ? {
-              ...exp,
-              responsibilities: exp.responsibilities.filter((_, i) => i !== index),
-            }
+          ? { ...exp, responsibilities: exp.responsibilities.filter((_, i) => i !== idx) }
           : exp
       ),
     });
   };
 
-  // Education handlers
-  const addEducation = () => {
-    const newEdu: Education = {
-      id: Date.now().toString(),
-      institution: "",
-      degree: "",
-      field: "",
-      location: "",
-      startDate: "",
-      endDate: "",
-      gpa: "",
-      achievements: [],
-    };
-    updateData({ education: [...resume.data.education, newEdu] });
-  };
-
-  const updateEducation = (id: string, field: keyof Education, value: unknown) => {
+  const updateEducation = <K extends keyof Education>(
+    id: string,
+    field: K,
+    value: Education[K]
+  ) => {
     updateData({
       education: resume.data.education.map((edu) =>
         edu.id === id ? { ...edu, [field]: value } : edu
@@ -205,156 +176,81 @@ const EditorPage: React.FC = () => {
     });
   };
 
+  const addEducation = () => {
+    const newEdu: Education = {
+      id: crypto.randomUUID(),
+      institution: "",
+      degree: "",
+      field: "",
+      location: "",
+      startDate: "",
+      endDate: "",
+    };
+    updateData({ education: [...resume.data.education, newEdu] });
+  };
+
   const deleteEducation = (id: string) => {
+    updateData({ education: resume.data.education.filter((edu) => edu.id !== id) });
+  };
+
+  const updateSkillCategory = <K extends keyof Skill>(id: string, field: K, value: Skill[K]) => {
     updateData({
-      education: resume.data.education.filter((edu) => edu.id !== id),
+      skills: resume.data.skills.map((s) => (s.id === id ? { ...s, [field]: value } : s)),
     });
   };
 
-  // Skills handlers
   const addSkillCategory = () => {
-    const newCategory: Skill = {
-      id: Date.now().toString(),
+    const newSkill: Skill = {
+      id: crypto.randomUUID(),
       category: "",
       skills: [""],
     };
-    updateData({ skills: [...resume.data.skills, newCategory] });
-  };
-
-  const updateSkillCategory = (id: string, field: keyof Skill, value: unknown) => {
-    updateData({
-      skills: resume.data.skills.map((cat) => (cat.id === id ? { ...cat, [field]: value } : cat)),
-    });
+    updateData({ skills: [...resume.data.skills, newSkill] });
   };
 
   const deleteSkillCategory = (id: string) => {
+    updateData({ skills: resume.data.skills.filter((s) => s.id !== id) });
+  };
+
+  const updateProject = <K extends keyof Project>(id: string, field: K, value: Project[K]) => {
     updateData({
-      skills: resume.data.skills.filter((cat) => cat.id !== id),
+      projects: resume.data.projects.map((p) => (p.id === id ? { ...p, [field]: value } : p)),
     });
   };
 
-  const addSkill = (catId: string) => {
-    updateData({
-      skills: resume.data.skills.map((cat) =>
-        cat.id === catId ? { ...cat, skills: [...cat.skills, ""] } : cat
-      ),
-    });
-  };
-
-  const updateSkill = (catId: string, index: number, value: string) => {
-    updateData({
-      skills: resume.data.skills.map((cat) =>
-        cat.id === catId
-          ? {
-              ...cat,
-              skills: cat.skills.map((s, i) => (i === index ? value : s)),
-            }
-          : cat
-      ),
-    });
-  };
-
-  const deleteSkill = (catId: string, index: number) => {
-    updateData({
-      skills: resume.data.skills.map((cat) =>
-        cat.id === catId ? { ...cat, skills: cat.skills.filter((_, i) => i !== index) } : cat
-      ),
-    });
-  };
-
-  // Project handlers
   const addProject = () => {
     const newProj: Project = {
-      id: Date.now().toString(),
+      id: crypto.randomUUID(),
       name: "",
       description: "",
       technologies: [""],
-      highlights: [""],
       link: "",
+      startDate: "",
+      endDate: "",
+      highlights: [""],
     };
     updateData({ projects: [...resume.data.projects, newProj] });
   };
 
-  const updateProject = (id: string, field: keyof Project, value: unknown) => {
-    updateData({
-      projects: resume.data.projects.map((proj) =>
-        proj.id === id ? { ...proj, [field]: value } : proj
-      ),
-    });
-  };
-
   const deleteProject = (id: string) => {
-    updateData({
-      projects: resume.data.projects.filter((proj) => proj.id !== id),
-    });
+    updateData({ projects: resume.data.projects.filter((p) => p.id !== id) });
   };
 
-  const addProjectTech = (projId: string) => {
+  const updateCertification = <K extends keyof Certification>(
+    id: string,
+    field: K,
+    value: Certification[K]
+  ) => {
     updateData({
-      projects: resume.data.projects.map((proj) =>
-        proj.id === projId ? { ...proj, technologies: [...proj.technologies, ""] } : proj
+      certifications: (resume.data.certifications || []).map((c) =>
+        c.id === id ? { ...c, [field]: value } : c
       ),
     });
   };
 
-  const updateProjectTech = (projId: string, index: number, value: string) => {
-    updateData({
-      projects: resume.data.projects.map((proj) =>
-        proj.id === projId
-          ? {
-              ...proj,
-              technologies: proj.technologies.map((t, i) => (i === index ? value : t)),
-            }
-          : proj
-      ),
-    });
-  };
-
-  const deleteProjectTech = (projId: string, index: number) => {
-    updateData({
-      projects: resume.data.projects.map((proj) =>
-        proj.id === projId
-          ? { ...proj, technologies: proj.technologies.filter((_, i) => i !== index) }
-          : proj
-      ),
-    });
-  };
-
-  const addProjectHighlight = (projId: string) => {
-    updateData({
-      projects: resume.data.projects.map((proj) =>
-        proj.id === projId ? { ...proj, highlights: [...proj.highlights, ""] } : proj
-      ),
-    });
-  };
-
-  const updateProjectHighlight = (projId: string, index: number, value: string) => {
-    updateData({
-      projects: resume.data.projects.map((proj) =>
-        proj.id === projId
-          ? {
-              ...proj,
-              highlights: proj.highlights.map((h, i) => (i === index ? value : h)),
-            }
-          : proj
-      ),
-    });
-  };
-
-  const deleteProjectHighlight = (projId: string, index: number) => {
-    updateData({
-      projects: resume.data.projects.map((proj) =>
-        proj.id === projId
-          ? { ...proj, highlights: proj.highlights.filter((_, i) => i !== index) }
-          : proj
-      ),
-    });
-  };
-
-  // Certification handlers
   const addCertification = () => {
     const newCert: Certification = {
-      id: Date.now().toString(),
+      id: crypto.randomUUID(),
       name: "",
       issuer: "",
       date: "",
@@ -363,24 +259,25 @@ const EditorPage: React.FC = () => {
     updateData({ certifications: [...(resume.data.certifications || []), newCert] });
   };
 
-  const updateCertification = (id: string, field: keyof Certification, value: unknown) => {
+  const deleteCertification = (id: string) => {
+    updateData({ certifications: (resume.data.certifications || []).filter((c) => c.id !== id) });
+  };
+
+  const updateOrganization = <K extends keyof Organization>(
+    id: string,
+    field: K,
+    value: Organization[K]
+  ) => {
     updateData({
-      certifications: (resume.data.certifications || []).map((cert) =>
-        cert.id === id ? { ...cert, [field]: value } : cert
+      organizations: (resume.data.organizations || []).map((o) =>
+        o.id === id ? { ...o, [field]: value } : o
       ),
     });
   };
 
-  const deleteCertification = (id: string) => {
-    updateData({
-      certifications: (resume.data.certifications || []).filter((cert) => cert.id !== id),
-    });
-  };
-
-  // Organization handlers
   const addOrganization = () => {
     const newOrg: Organization = {
-      id: Date.now().toString(),
+      id: crypto.randomUUID(),
       name: "",
       role: "",
       startDate: "",
@@ -390,24 +287,25 @@ const EditorPage: React.FC = () => {
     updateData({ organizations: [...(resume.data.organizations || []), newOrg] });
   };
 
-  const updateOrganization = (id: string, field: keyof Organization, value: unknown) => {
+  const deleteOrganization = (id: string) => {
+    updateData({ organizations: (resume.data.organizations || []).filter((o) => o.id !== id) });
+  };
+
+  const updatePublication = <K extends keyof Publication>(
+    id: string,
+    field: K,
+    value: Publication[K]
+  ) => {
     updateData({
-      organizations: (resume.data.organizations || []).map((org) =>
-        org.id === id ? { ...org, [field]: value } : org
+      publications: (resume.data.publications || []).map((p) =>
+        p.id === id ? { ...p, [field]: value } : p
       ),
     });
   };
 
-  const deleteOrganization = (id: string) => {
-    updateData({
-      organizations: (resume.data.organizations || []).filter((org) => org.id !== id),
-    });
-  };
-
-  // Publication handlers
   const addPublication = () => {
     const newPub: Publication = {
-      id: Date.now().toString(),
+      id: crypto.randomUUID(),
       title: "",
       publisher: "",
       date: "",
@@ -417,1047 +315,247 @@ const EditorPage: React.FC = () => {
     updateData({ publications: [...(resume.data.publications || []), newPub] });
   };
 
-  const updatePublication = (id: string, field: keyof Publication, value: unknown) => {
-    updateData({
-      publications: (resume.data.publications || []).map((pub) =>
-        pub.id === id ? { ...pub, [field]: value } : pub
-      ),
-    });
+  const deletePublication = (id: string) => {
+    updateData({ publications: (resume.data.publications || []).filter((p) => p.id !== id) });
   };
 
-  const deletePublication = (id: string) => {
-    updateData({
-      publications: (resume.data.publications || []).filter((pub) => pub.id !== id),
-    });
-  };
+  const SECTIONS = [
+    {
+      id: "personal",
+      label: "Personal Info",
+      icon: User,
+      color: "blue",
+      bg: "bg-blue-500/10",
+      hover: "group-hover/item:bg-blue-500/20",
+      text: "text-blue-500",
+    },
+    {
+      id: "experience",
+      label: "Experience",
+      icon: Briefcase,
+      color: "emerald",
+      bg: "bg-emerald-500/10",
+      hover: "group-hover/item:bg-emerald-500/20",
+      text: "text-emerald-500",
+    },
+    {
+      id: "education",
+      label: "Education",
+      icon: GraduationCap,
+      color: "violet",
+      bg: "bg-violet-500/10",
+      hover: "group-hover/item:bg-violet-500/20",
+      text: "text-violet-500",
+    },
+    {
+      id: "skills",
+      label: "Skills",
+      icon: Wrench,
+      color: "amber",
+      bg: "bg-amber-500/10",
+      hover: "group-hover/item:bg-amber-500/20",
+      text: "text-amber-500",
+    },
+    {
+      id: "projects",
+      label: "Projects",
+      icon: FolderRoot,
+      color: "indigo",
+      bg: "bg-indigo-500/10",
+      hover: "group-hover/item:bg-indigo-500/20",
+      text: "text-indigo-500",
+    },
+    {
+      id: "certifications",
+      label: "License & Certifications",
+      icon: Award,
+      color: "orange",
+      bg: "bg-orange-500/10",
+      hover: "group-hover/item:bg-orange-500/20",
+      text: "text-orange-500",
+    },
+    {
+      id: "organizations",
+      label: "Organizations",
+      icon: Users,
+      color: "rose",
+      bg: "bg-rose-500/10",
+      hover: "group-hover/item:bg-rose-500/20",
+      text: "text-rose-500",
+    },
+    {
+      id: "publications",
+      label: "Publications",
+      icon: BookOpen,
+      color: "cyan",
+      bg: "bg-cyan-500/10",
+      hover: "group-hover/item:bg-cyan-500/20",
+      text: "text-cyan-500",
+    },
+  ];
 
   return (
-    <div className="min-h-screen bg-slate-50 flex flex-col">
-      {/* Top Navigation */}
-      <header className="sticky top-0 z-50 bg-white/80 backdrop-blur-md border-b border-slate-200 px-4 md:px-6 py-3 flex flex-wrap items-center justify-between shadow-sm no-print gap-3 md:gap-0">
-        <div className="flex items-center gap-3 md:gap-4 order-1">
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => router.push("/templates")}
-            className="hover:bg-slate-100 rounded-full h-8 w-8 md:h-10 md:w-10"
-          >
-            <ChevronLeft className="h-4 w-4 md:h-5 md:w-5" />
-          </Button>
-          <div className="flex flex-col">
-            <div className="flex items-center gap-2">
-              <h1 className="text-base md:text-lg font-bold text-slate-900 leading-none">
-                Resume Builder
-              </h1>
-              <Badge
-                variant="outline"
-                className="text-[10px] h-4 px-1.5 uppercase tracking-wider font-bold bg-slate-50 hidden sm:inline-flex"
-              >
-                Draft
-              </Badge>
-            </div>
-            <p className="text-xs text-slate-500 mt-1 hidden sm:block">
-              Template:{" "}
-              <span className="text-primary font-medium">
-                {selectedTemplateId || "ATS Minimal"}
-              </span>
-            </p>
-          </div>
-        </div>
+    <div className="min-h-screen bg-background text-foreground flex flex-col transition-colors duration-300">
+      <EditorHeader
+        selectedTemplateId={selectedTemplateId}
+        viewMode={viewMode}
+        setViewMode={setViewMode}
+        canUndo={canUndo}
+        onUndo={undo}
+        isExporting={isExporting}
+        onExportPDF={handleExportPDF}
+        onExportDocx={handleExportDocx}
+        onPrint={handlePrint}
+      />
 
-        <div className="flex items-center bg-slate-100 p-1 rounded-lg order-3 md:order-2 w-full md:w-auto justify-center mt-1 md:mt-0">
-          <Button
-            variant={viewMode === "edit" ? "secondary" : "ghost"}
-            size="sm"
-            className={cn(
-              "px-3 text-xs md:text-sm flex-1 md:flex-none",
-              viewMode === "edit" && "shadow-sm bg-white"
-            )}
-            onClick={() => setViewMode("edit")}
-          >
-            Edit
-          </Button>
-          <Button
-            variant={viewMode === "split" ? "secondary" : "ghost"}
-            size="sm"
-            className={cn(
-              "px-3 text-xs md:text-sm flex-1 md:flex-none",
-              viewMode === "split" && "shadow-sm bg-white"
-            )}
-            onClick={() => setViewMode("split")}
-          >
-            Split
-          </Button>
-          <Button
-            variant={viewMode === "preview" ? "secondary" : "ghost"}
-            size="sm"
-            className={cn(
-              "px-3 text-xs md:text-sm flex-1 md:flex-none",
-              viewMode === "preview" && "shadow-sm bg-white"
-            )}
-            onClick={() => setViewMode("preview")}
-          >
-            Preview
-          </Button>
-        </div>
-
-        <div className="flex items-center gap-2 order-2 md:order-3">
-          <Button
-            variant="outline"
-            size="sm"
-            disabled={!canUndo}
-            onClick={undo}
-            className="h-8 md:h-9 px-2 md:px-3 text-xs md:text-sm"
-          >
-            <Undo2 className="h-3 w-3 md:h-4 md:w-4 md:mr-2" />
-            <span className="hidden md:inline">Undo</span>
-          </Button>
-
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button
-                size="sm"
-                className="h-8 md:h-9 px-2 md:px-3 text-xs md:text-sm"
-                disabled={isExporting}
-              >
-                {isExporting ? (
-                  <Loader2 className="h-3 w-3 md:h-4 md:w-4 mr-1 md:mr-2 animate-spin" />
-                ) : (
-                  <Download className="h-3 w-3 md:h-4 md:w-4 md:mr-2 mr-1" />
-                )}
-                Export
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-48">
-              <DropdownMenuItem onClick={handleExportPDF} className="cursor-pointer">
-                <FileDown className="h-4 w-4 mr-2 text-red-500" />
-                <span>Export as PDF</span>
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={handleExportDocx} className="cursor-pointer">
-                <FileText className="h-4 w-4 mr-2 text-blue-500" />
-                <span>Export as Word</span>
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={handlePrint} className="cursor-pointer">
-                <Printer className="h-4 w-4 mr-2 text-slate-500" />
-                <span>Print Document</span>
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        </div>
-      </header>
-
-      <main className="flex-1 flex flex-col md:flex-row overflow-hidden">
-        {/* Editor Section */}
+      <main className="flex-1 flex overflow-hidden">
         <div
           className={cn(
-            "flex-1 overflow-y-auto px-4 md:px-6 py-4 md:py-8 transition-all duration-300",
+            "flex-1 overflow-y-auto px-6 py-10 transition-all duration-300",
             viewMode === "preview" ? "hidden" : "block",
-            viewMode === "split" ? "w-full md:w-1/2" : "w-full max-w-4xl mx-auto"
+            viewMode === "split" ? "w-1/2" : "max-w-4xl mx-auto"
           )}
         >
-          <div className="space-y-8">
+          <div className="space-y-10">
             <div className="flex items-center justify-between">
-              <h2 className="text-2xl font-bold text-slate-900">Resume Content</h2>
-              <Badge variant="outline" className="font-normal text-slate-400">
-                Changes saved automatically
+              <h2 className="text-3xl font-extrabold tracking-tight text-foreground">
+                Resume Content
+              </h2>
+              <Badge
+                variant="secondary"
+                className="bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20 font-bold px-3 py-1 animate-pulse"
+              >
+                Saved Automatically
               </Badge>
             </div>
 
-            <Accordion type="single" collapsible defaultValue="personal" className="space-y-4">
-              {/* Personal Info Section */}
-              <AccordionItem
-                value="personal"
-                className="border rounded-xl bg-white overflow-hidden"
-              >
-                <AccordionTrigger className="px-6 hover:no-underline hover:bg-slate-50/50">
-                  <div className="flex items-center gap-3">
-                    <div className="p-2 bg-blue-50 rounded-lg">
-                      <User className="h-5 w-5 text-blue-600" />
+            <Accordion type="single" collapsible defaultValue="personal" className="space-y-6">
+              {SECTIONS.map((section) => (
+                <AccordionItem
+                  key={section.id}
+                  value={section.id}
+                  className="border border-border/60 rounded-2xl bg-card shadow-sm overflow-hidden transition-all hover:shadow-md group/item"
+                >
+                  <AccordionTrigger className="px-6 py-5 hover:no-underline">
+                    <div className="flex items-center justify-between w-full pr-4">
+                      <div className="flex items-center gap-4">
+                        <div
+                          className={cn(
+                            "p-2.5 rounded-xl transition-colors",
+                            section.bg,
+                            section.hover
+                          )}
+                        >
+                          <section.icon className={cn("h-5 w-5", section.text)} />
+                        </div>
+                        <span className="text-lg font-bold text-foreground">{section.label}</span>
+                      </div>
+                      {section.id !== "personal" && (
+                        <Badge
+                          variant="secondary"
+                          className="bg-primary/5 text-primary border-primary/10 font-bold px-2 py-0.5"
+                        >
+                          {section.id === "experience"
+                            ? resume.data.experiences.length
+                            : section.id === "education"
+                              ? resume.data.education.length
+                              : section.id === "skills"
+                                ? resume.data.skills.length
+                                : section.id === "projects"
+                                  ? resume.data.projects.length
+                                  : section.id === "certifications"
+                                    ? (resume.data.certifications || []).length
+                                    : section.id === "organizations"
+                                      ? (resume.data.organizations || []).length
+                                      : section.id === "publications"
+                                        ? (resume.data.publications || []).length
+                                        : 0}
+                        </Badge>
+                      )}
                     </div>
-                    <span className="font-bold text-slate-900">Personal Information</span>
-                  </div>
-                </AccordionTrigger>
-                <AccordionContent className="p-6 pt-0 border-t border-slate-100 bg-white">
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 pt-6">
-                    <div className="space-y-2">
-                      <Label htmlFor="fullname">Full Name</Label>
-                      <Input
-                        id="fullname"
-                        value={resume.data.personalInfo.fullName}
-                        onChange={(e) =>
-                          updateData({
-                            personalInfo: { ...resume.data.personalInfo, fullName: e.target.value },
-                          })
+                  </AccordionTrigger>
+                  <AccordionContent className="px-6 pb-6 pt-2 border-t border-border/40">
+                    {section.id === "personal" && (
+                      <PersonalInfoSection
+                        data={resume.data.personalInfo}
+                        onChange={(data) =>
+                          updateData({ personalInfo: { ...resume.data.personalInfo, ...data } })
                         }
-                        placeholder="John Doe"
                       />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="email">Email Address</Label>
-                      <Input
-                        id="email"
-                        type="email"
-                        value={resume.data.personalInfo.email}
-                        onChange={(e) =>
-                          updateData({
-                            personalInfo: { ...resume.data.personalInfo, email: e.target.value },
-                          })
-                        }
-                        placeholder="john@example.com"
+                    )}
+                    {section.id === "experience" && (
+                      <ExperienceSection
+                        experiences={resume.data.experiences}
+                        onUpdate={updateExperience}
+                        onAdd={addExperience}
+                        onDelete={deleteExperience}
+                        onAddResponsibility={addResponsibility}
+                        onUpdateResponsibility={updateResponsibility}
+                        onDeleteResponsibility={deleteResponsibility}
                       />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="phone">Phone Number</Label>
-                      <Input
-                        id="phone"
-                        value={resume.data.personalInfo.phone}
-                        onChange={(e) =>
-                          updateData({
-                            personalInfo: { ...resume.data.personalInfo, phone: e.target.value },
-                          })
-                        }
-                        placeholder="+1 234 567 890"
+                    )}
+                    {section.id === "education" && (
+                      <EducationSection
+                        education={resume.data.education}
+                        onUpdate={updateEducation}
+                        onAdd={addEducation}
+                        onDelete={deleteEducation}
                       />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="location">Location</Label>
-                      <Input
-                        id="location"
-                        value={resume.data.personalInfo.location}
-                        onChange={(e) =>
-                          updateData({
-                            personalInfo: { ...resume.data.personalInfo, location: e.target.value },
-                          })
-                        }
-                        placeholder="City, Country"
+                    )}
+                    {section.id === "skills" && (
+                      <SkillsSection
+                        skills={resume.data.skills}
+                        onUpdate={updateSkillCategory}
+                        onAdd={addSkillCategory}
+                        onDelete={deleteSkillCategory}
                       />
-                    </div>
-                    <div className="sm:col-span-2 space-y-2">
-                      <Label htmlFor="summary">Professional Summary</Label>
-                      <textarea
-                        id="summary"
-                        className="w-full min-h-[120px] p-3 rounded-lg border border-slate-200 bg-white text-sm focus:ring-2 focus:ring-primary focus:outline-none"
-                        value={resume.data.personalInfo.summary}
-                        onChange={(e) =>
-                          updateData({
-                            personalInfo: { ...resume.data.personalInfo, summary: e.target.value },
-                          })
-                        }
-                        placeholder="Tell us about your professional background..."
+                    )}
+                    {section.id === "projects" && (
+                      <ProjectsSection
+                        projects={resume.data.projects}
+                        onUpdate={updateProject}
+                        onAdd={addProject}
+                        onDelete={deleteProject}
                       />
-                    </div>
-                  </div>
-                </AccordionContent>
-              </AccordionItem>
-
-              {/* Experience Section */}
-              <AccordionItem
-                value="experience"
-                className="border rounded-xl bg-white overflow-hidden"
-              >
-                <AccordionTrigger className="px-6 hover:no-underline hover:bg-slate-50/50">
-                  <div className="flex items-center gap-3">
-                    <div className="p-2 bg-emerald-50 rounded-lg">
-                      <Briefcase className="h-5 w-5 text-emerald-600" />
-                    </div>
-                    <span className="font-bold text-slate-900">Professional Experience</span>
-                    <Badge variant="secondary" className="ml-2 bg-slate-100">
-                      {resume.data.experiences.length}
-                    </Badge>
-                  </div>
-                </AccordionTrigger>
-                <AccordionContent className="p-6 pt-0 border-t border-slate-100 bg-white">
-                  <div className="space-y-6 pt-6">
-                    {resume.data.experiences.map((exp, idx) => (
-                      <Card key={exp.id} className="relative group border-slate-200">
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="absolute top-4 right-4 text-slate-400 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity"
-                          onClick={() => deleteExperience(exp.id)}
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                        <CardHeader className="p-5 pb-2">
-                          <CardTitle className="text-sm font-medium text-slate-500 uppercase tracking-wider">
-                            Position #{idx + 1}
-                          </CardTitle>
-                        </CardHeader>
-                        <CardContent className="p-5 space-y-4">
-                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                            <div className="space-y-2">
-                              <Label>Job Title</Label>
-                              <Input
-                                value={exp.position}
-                                onChange={(e) =>
-                                  updateExperience(exp.id, "position", e.target.value)
-                                }
-                                placeholder="Senior Software Engineer"
-                              />
-                            </div>
-                            <div className="space-y-2">
-                              <Label>Company</Label>
-                              <Input
-                                value={exp.company}
-                                onChange={(e) =>
-                                  updateExperience(exp.id, "company", e.target.value)
-                                }
-                                placeholder="Google Inc."
-                              />
-                            </div>
-                            <div className="space-y-2">
-                              <Label>Dates</Label>
-                              <div className="grid grid-cols-2 gap-2">
-                                <Input
-                                  placeholder="Jan 2020"
-                                  value={exp.startDate}
-                                  onChange={(e) =>
-                                    updateExperience(exp.id, "startDate", e.target.value)
-                                  }
-                                />
-                                <Input
-                                  placeholder="Present"
-                                  value={exp.endDate}
-                                  onChange={(e) =>
-                                    updateExperience(exp.id, "endDate", e.target.value)
-                                  }
-                                />
-                              </div>
-                            </div>
-                            <div className="space-y-2">
-                              <Label>Location</Label>
-                              <Input
-                                value={exp.location}
-                                onChange={(e) =>
-                                  updateExperience(exp.id, "location", e.target.value)
-                                }
-                                placeholder="Mountain View, CA"
-                              />
-                            </div>
-                          </div>
-
-                          <Separator className="my-4" />
-
-                          <div className="space-y-3">
-                            <Label>Responsibilities</Label>
-                            {exp.responsibilities.map((resp, rIdx) => (
-                              <div key={rIdx} className="flex gap-2">
-                                <Input
-                                  value={resp}
-                                  onChange={(e) =>
-                                    updateResponsibility(exp.id, rIdx, e.target.value)
-                                  }
-                                  placeholder="Key achievement or responsibility..."
-                                  className="flex-1"
-                                />
-                                <Button
-                                  variant="ghost"
-                                  size="icon"
-                                  onClick={() => deleteResponsibility(exp.id, rIdx)}
-                                >
-                                  <Trash2 className="h-4 w-4 text-slate-300 hover:text-red-500" />
-                                </Button>
-                              </div>
-                            ))}
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              className="w-full mt-2"
-                              onClick={() => addResponsibility(exp.id)}
-                            >
-                              <Plus className="h-4 w-4 mr-2" />
-                              Add Bullet Point
-                            </Button>
-                          </div>
-                        </CardContent>
-                      </Card>
-                    ))}
-                    <Button
-                      className="w-full py-8 border-2 border-dashed border-slate-200 bg-transparent text-slate-500 hover:bg-slate-50 hover:border-slate-300 hover:text-slate-900"
-                      onClick={addExperience}
-                    >
-                      <Plus className="h-5 w-5 mr-2" />
-                      Add Work Experience
-                    </Button>
-                  </div>
-                </AccordionContent>
-              </AccordionItem>
-
-              {/* Education Section */}
-              <AccordionItem
-                value="education"
-                className="border rounded-xl bg-white overflow-hidden"
-              >
-                <AccordionTrigger className="px-6 hover:no-underline hover:bg-slate-50/50">
-                  <div className="flex items-center gap-3">
-                    <div className="p-2 bg-violet-50 rounded-lg">
-                      <GraduationCap className="h-5 w-5 text-violet-600" />
-                    </div>
-                    <span className="font-bold text-slate-900">Education</span>
-                    <Badge variant="secondary" className="ml-2 bg-slate-100">
-                      {resume.data.education.length}
-                    </Badge>
-                  </div>
-                </AccordionTrigger>
-                <AccordionContent className="p-6 pt-0 border-t border-slate-100 bg-white">
-                  <div className="space-y-6 pt-6">
-                    {resume.data.education.map((edu) => (
-                      <Card key={edu.id} className="relative group border-slate-200">
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="absolute top-4 right-4 text-slate-400 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity"
-                          onClick={() => deleteEducation(edu.id)}
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                        <CardContent className="p-5 space-y-4">
-                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                            <div className="space-y-2">
-                              <Label>Degree</Label>
-                              <Input
-                                value={edu.degree}
-                                onChange={(e) => updateEducation(edu.id, "degree", e.target.value)}
-                                placeholder="Bachelor of Science"
-                              />
-                            </div>
-                            <div className="space-y-2">
-                              <Label>Field of Study</Label>
-                              <Input
-                                value={edu.field}
-                                onChange={(e) => updateEducation(edu.id, "field", e.target.value)}
-                                placeholder="Computer Science"
-                              />
-                            </div>
-                            <div className="sm:col-span-2 space-y-2">
-                              <Label>Institution</Label>
-                              <Input
-                                value={edu.institution}
-                                onChange={(e) =>
-                                  updateEducation(edu.id, "institution", e.target.value)
-                                }
-                                placeholder="University of California, Berkeley"
-                              />
-                            </div>
-                            <div className="space-y-2">
-                              <Label>Dates</Label>
-                              <div className="grid grid-cols-2 gap-2">
-                                <Input
-                                  placeholder="Sept 2016"
-                                  value={edu.startDate}
-                                  onChange={(e) =>
-                                    updateEducation(edu.id, "startDate", e.target.value)
-                                  }
-                                />
-                                <Input
-                                  placeholder="June 2020"
-                                  value={edu.endDate}
-                                  onChange={(e) =>
-                                    updateEducation(edu.id, "endDate", e.target.value)
-                                  }
-                                />
-                              </div>
-                            </div>
-                            <div className="space-y-2">
-                              <Label>GPA (Optional)</Label>
-                              <Input
-                                value={edu.gpa}
-                                onChange={(e) => updateEducation(edu.id, "gpa", e.target.value)}
-                                placeholder="3.8/4.0"
-                              />
-                            </div>
-                          </div>
-                        </CardContent>
-                      </Card>
-                    ))}
-                    <Button
-                      variant="outline"
-                      className="w-full py-8 border-dashed"
-                      onClick={addEducation}
-                    >
-                      <Plus className="h-5 w-5 mr-2" />
-                      Add Education
-                    </Button>
-                  </div>
-                </AccordionContent>
-              </AccordionItem>
-
-              {/* Skills Section */}
-              <AccordionItem value="skills" className="border rounded-xl bg-white overflow-hidden">
-                <AccordionTrigger className="px-6 hover:no-underline hover:bg-slate-50/50">
-                  <div className="flex items-center gap-3">
-                    <div className="p-2 bg-amber-50 rounded-lg">
-                      <Wrench className="h-5 w-5 text-amber-600" />
-                    </div>
-                    <span className="font-bold text-slate-900">Skills & Competencies</span>
-                    <Badge variant="secondary" className="ml-2 bg-slate-100">
-                      {resume.data.skills.length}
-                    </Badge>
-                  </div>
-                </AccordionTrigger>
-                <AccordionContent className="p-6 pt-0 border-t border-slate-100 bg-white">
-                  <div className="space-y-6 pt-6">
-                    {resume.data.skills.map((cat) => (
-                      <Card key={cat.id} className="relative group border-slate-200">
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="absolute top-4 right-4 text-slate-400 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity"
-                          onClick={() => deleteSkillCategory(cat.id)}
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                        <CardContent className="p-5 space-y-4">
-                          <div className="space-y-2">
-                            <Label>Skill Category</Label>
-                            <Input
-                              value={cat.category}
-                              onChange={(e) =>
-                                updateSkillCategory(cat.id, "category", e.target.value)
-                              }
-                              placeholder="Technical Skills, Languages, etc."
-                              className="font-bold"
-                            />
-                          </div>
-                          <div className="flex flex-wrap gap-2 pt-2">
-                            {cat.skills.map((skill, sIdx) => (
-                              <div
-                                key={sIdx}
-                                className="group/item flex items-center bg-slate-100 rounded-full pl-3 pr-1 py-1"
-                              >
-                                <input
-                                  autoFocus={skill === ""}
-                                  className="bg-transparent border-none focus:outline-none text-sm min-w-[60px]"
-                                  value={skill}
-                                  onChange={(e) => updateSkill(cat.id, sIdx, e.target.value)}
-                                  placeholder="Skill..."
-                                />
-                                <Button
-                                  variant="ghost"
-                                  size="icon"
-                                  className="h-6 w-6 rounded-full hover:bg-slate-200"
-                                  onClick={() => deleteSkill(cat.id, sIdx)}
-                                >
-                                  <Trash2 className="h-3 w-3 text-slate-400 hover:text-red-500" />
-                                </Button>
-                              </div>
-                            ))}
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              className="rounded-full h-8"
-                              onClick={() => addSkill(cat.id)}
-                            >
-                              <Plus className="h-4 w-4 mr-1" />
-                              Add
-                            </Button>
-                          </div>
-                        </CardContent>
-                      </Card>
-                    ))}
-                    <Button
-                      variant="outline"
-                      className="w-full py-8 border-dashed"
-                      onClick={addSkillCategory}
-                    >
-                      <Plus className="h-5 w-5 mr-2" />
-                      Add Skill Category
-                    </Button>
-                  </div>
-                </AccordionContent>
-              </AccordionItem>
-
-              {/* Projects Section */}
-              <AccordionItem
-                value="projects"
-                className="border rounded-xl bg-white overflow-hidden"
-              >
-                <AccordionTrigger className="px-6 hover:no-underline hover:bg-slate-50/50">
-                  <div className="flex items-center gap-3">
-                    <div className="p-2 bg-indigo-50 rounded-lg">
-                      <FolderRoot className="h-5 w-5 text-indigo-600" />
-                    </div>
-                    <span className="font-bold text-slate-900">Projects</span>
-                    <Badge variant="secondary" className="ml-2 bg-slate-100">
-                      {resume.data.projects.length}
-                    </Badge>
-                  </div>
-                </AccordionTrigger>
-                <AccordionContent className="p-6 pt-0 border-t border-slate-100 bg-white">
-                  <div className="space-y-6 pt-6">
-                    {resume.data.projects.map((proj, idx) => (
-                      <Card key={proj.id} className="relative group border-slate-200">
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="absolute top-4 right-4 text-slate-400 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity"
-                          onClick={() => deleteProject(proj.id)}
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                        <CardHeader className="p-5 pb-2">
-                          <CardTitle className="text-sm font-medium text-slate-500 uppercase tracking-wider">
-                            Project #{idx + 1}
-                          </CardTitle>
-                        </CardHeader>
-                        <CardContent className="p-5 space-y-4">
-                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                            <div className="sm:col-span-2 space-y-2">
-                              <Label>Project Name</Label>
-                              <Input
-                                value={proj.name}
-                                onChange={(e) => updateProject(proj.id, "name", e.target.value)}
-                                placeholder="Personal Portfolio Website"
-                              />
-                            </div>
-                            <div className="sm:col-span-2 space-y-2">
-                              <Label>Description</Label>
-                              <textarea
-                                className="w-full min-h-[80px] p-3 rounded-lg border border-slate-200 bg-white text-sm focus:ring-2 focus:ring-primary focus:outline-none"
-                                value={proj.description}
-                                onChange={(e) =>
-                                  updateProject(proj.id, "description", e.target.value)
-                                }
-                                placeholder="Describe what the project is about..."
-                              />
-                            </div>
-                            <div className="sm:col-span-2 space-y-2">
-                              <Label>Project Link (Optional)</Label>
-                              <div className="flex items-center gap-2">
-                                <Link className="h-4 w-4 text-slate-400" />
-                                <Input
-                                  value={proj.link}
-                                  onChange={(e) => updateProject(proj.id, "link", e.target.value)}
-                                  placeholder="https://github.com/yourusername/project"
-                                />
-                              </div>
-                            </div>
-                          </div>
-
-                          <Separator className="my-4" />
-
-                          <div className="space-y-3">
-                            <Label>Technologies Used</Label>
-                            <div className="flex flex-wrap gap-2">
-                              {proj.technologies.map((tech, tIdx) => (
-                                <div
-                                  key={tIdx}
-                                  className="flex items-center bg-slate-100 rounded-full pl-3 pr-1 py-1"
-                                >
-                                  <input
-                                    className="bg-transparent border-none focus:outline-none text-sm min-w-[80px]"
-                                    value={tech}
-                                    onChange={(e) =>
-                                      updateProjectTech(proj.id, tIdx, e.target.value)
-                                    }
-                                    placeholder="React, Node.js..."
-                                  />
-                                  <Button
-                                    variant="ghost"
-                                    size="icon"
-                                    className="h-6 w-6 rounded-full"
-                                    onClick={() => deleteProjectTech(proj.id, tIdx)}
-                                  >
-                                    <Trash2 className="h-3 w-3 text-slate-400" />
-                                  </Button>
-                                </div>
-                              ))}
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                className="rounded-full h-8"
-                                onClick={() => addProjectTech(proj.id)}
-                              >
-                                <Plus className="h-4 w-4 mr-1" /> Add
-                              </Button>
-                            </div>
-                          </div>
-
-                          <Separator className="my-4" />
-
-                          <div className="space-y-3">
-                            <Label>Key Highlights</Label>
-                            {proj.highlights.map((high, hIdx) => (
-                              <div key={hIdx} className="flex gap-2">
-                                <Input
-                                  value={high}
-                                  onChange={(e) =>
-                                    updateProjectHighlight(proj.id, hIdx, e.target.value)
-                                  }
-                                  placeholder="Implemented OAuth2 authentication..."
-                                  className="flex-1"
-                                />
-                                <Button
-                                  variant="ghost"
-                                  size="icon"
-                                  onClick={() => deleteProjectHighlight(proj.id, hIdx)}
-                                >
-                                  <Trash2 className="h-4 w-4 text-slate-300 hover:text-red-500" />
-                                </Button>
-                              </div>
-                            ))}
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              className="w-full mt-2"
-                              onClick={() => addProjectHighlight(proj.id)}
-                            >
-                              <Plus className="h-4 w-4 mr-2" />
-                              Add Highlight
-                            </Button>
-                          </div>
-                        </CardContent>
-                      </Card>
-                    ))}
-                    <Button
-                      variant="outline"
-                      className="w-full py-8 border-dashed"
-                      onClick={addProject}
-                    >
-                      <Plus className="h-5 w-5 mr-2" />
-                      Add Project
-                    </Button>
-                  </div>
-                </AccordionContent>
-              </AccordionItem>
-
-              {/* Licenses & Certifications Section */}
-              <AccordionItem
-                value="certifications"
-                className="border rounded-xl bg-white overflow-hidden"
-              >
-                <AccordionTrigger className="px-6 hover:no-underline hover:bg-slate-50/50">
-                  <div className="flex items-center gap-3">
-                    <div className="p-2 bg-orange-50 rounded-lg">
-                      <Award className="h-5 w-5 text-orange-600" />
-                    </div>
-                    <span className="font-bold text-slate-900">Licenses & Certifications</span>
-                    <Badge variant="secondary" className="ml-2 bg-slate-100">
-                      {(resume.data.certifications || []).length}
-                    </Badge>
-                  </div>
-                </AccordionTrigger>
-                <AccordionContent className="p-6 pt-0 border-t border-slate-100 bg-white">
-                  <div className="space-y-6 pt-6">
-                    {(resume.data.certifications || []).map((cert, idx) => (
-                      <Card key={cert.id} className="relative group border-slate-200">
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="absolute top-4 right-4 text-slate-400 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity"
-                          onClick={() => deleteCertification(cert.id)}
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                        <CardHeader className="p-5 pb-2">
-                          <CardTitle className="text-sm font-medium text-slate-500 uppercase tracking-wider">
-                            License / Certification #{idx + 1}
-                          </CardTitle>
-                        </CardHeader>
-                        <CardContent className="p-5 space-y-4">
-                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                            <div className="sm:col-span-2 space-y-2">
-                              <Label>Name</Label>
-                              <Input
-                                value={cert.name}
-                                onChange={(e) =>
-                                  updateCertification(cert.id, "name", e.target.value)
-                                }
-                                placeholder="AWS Certified Solutions Architect"
-                              />
-                            </div>
-                            <div className="space-y-2">
-                              <Label>Issuer</Label>
-                              <Input
-                                value={cert.issuer}
-                                onChange={(e) =>
-                                  updateCertification(cert.id, "issuer", e.target.value)
-                                }
-                                placeholder="Amazon Web Services"
-                              />
-                            </div>
-                            <div className="space-y-2">
-                              <Label>Date</Label>
-                              <Input
-                                value={cert.date}
-                                onChange={(e) =>
-                                  updateCertification(cert.id, "date", e.target.value)
-                                }
-                                placeholder="May 2024"
-                              />
-                            </div>
-                            <div className="sm:col-span-2 space-y-2">
-                              <Label>Credential ID / URL (Optional)</Label>
-                              <div className="flex items-center gap-2">
-                                <Link className="h-4 w-4 text-slate-400" />
-                                <Input
-                                  value={cert.credentialId}
-                                  onChange={(e) =>
-                                    updateCertification(cert.id, "credentialId", e.target.value)
-                                  }
-                                  placeholder="Credential ID or URL"
-                                />
-                              </div>
-                            </div>
-                          </div>
-                        </CardContent>
-                      </Card>
-                    ))}
-                    <Button
-                      variant="outline"
-                      className="w-full py-8 border-dashed"
-                      onClick={addCertification}
-                    >
-                      <Plus className="h-5 w-5 mr-2" />
-                      Add License/Certification
-                    </Button>
-                  </div>
-                </AccordionContent>
-              </AccordionItem>
-
-              {/* Organizations Section */}
-              <AccordionItem
-                value="organizations"
-                className="border rounded-xl bg-white overflow-hidden"
-              >
-                <AccordionTrigger className="px-6 hover:no-underline hover:bg-slate-50/50">
-                  <div className="flex items-center gap-3">
-                    <div className="p-2 bg-pink-50 rounded-lg">
-                      <Users className="h-5 w-5 text-pink-600" />
-                    </div>
-                    <span className="font-bold text-slate-900">Organizations</span>
-                    <Badge variant="secondary" className="ml-2 bg-slate-100">
-                      {(resume.data.organizations || []).length}
-                    </Badge>
-                  </div>
-                </AccordionTrigger>
-                <AccordionContent className="p-6 pt-0 border-t border-slate-100 bg-white">
-                  <div className="space-y-6 pt-6">
-                    {(resume.data.organizations || []).map((org, idx) => (
-                      <Card key={org.id} className="relative group border-slate-200">
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="absolute top-4 right-4 text-slate-400 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity"
-                          onClick={() => deleteOrganization(org.id)}
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                        <CardHeader className="p-5 pb-2">
-                          <CardTitle className="text-sm font-medium text-slate-500 uppercase tracking-wider">
-                            Organization #{idx + 1}
-                          </CardTitle>
-                        </CardHeader>
-                        <CardContent className="p-5 space-y-4">
-                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                            <div className="space-y-2">
-                              <Label>Organization Name</Label>
-                              <Input
-                                value={org.name}
-                                onChange={(e) => updateOrganization(org.id, "name", e.target.value)}
-                                placeholder="Student Council / IEEE"
-                              />
-                            </div>
-                            <div className="space-y-2">
-                              <Label>Role</Label>
-                              <Input
-                                value={org.role}
-                                onChange={(e) => updateOrganization(org.id, "role", e.target.value)}
-                                placeholder="President / Volunteer"
-                              />
-                            </div>
-                            <div className="space-y-2">
-                              <Label>Dates</Label>
-                              <div className="grid grid-cols-2 gap-2">
-                                <Input
-                                  placeholder="Jan 2020"
-                                  value={org.startDate}
-                                  onChange={(e) =>
-                                    updateOrganization(org.id, "startDate", e.target.value)
-                                  }
-                                />
-                                <Input
-                                  placeholder="Present"
-                                  value={org.endDate}
-                                  onChange={(e) =>
-                                    updateOrganization(org.id, "endDate", e.target.value)
-                                  }
-                                />
-                              </div>
-                            </div>
-                            <div className="sm:col-span-2 space-y-2">
-                              <Label>Description</Label>
-                              <textarea
-                                className="w-full min-h-[80px] p-3 rounded-lg border border-slate-200 bg-white text-sm focus:ring-2 focus:ring-primary focus:outline-none"
-                                value={org.description}
-                                onChange={(e) =>
-                                  updateOrganization(org.id, "description", e.target.value)
-                                }
-                                placeholder="Description of your activities..."
-                              />
-                            </div>
-                          </div>
-                        </CardContent>
-                      </Card>
-                    ))}
-                    <Button
-                      variant="outline"
-                      className="w-full py-8 border-dashed"
-                      onClick={addOrganization}
-                    >
-                      <Plus className="h-5 w-5 mr-2" />
-                      Add Organization
-                    </Button>
-                  </div>
-                </AccordionContent>
-              </AccordionItem>
-
-              {/* Publications Section */}
-              <AccordionItem
-                value="publications"
-                className="border rounded-xl bg-white overflow-hidden"
-              >
-                <AccordionTrigger className="px-6 hover:no-underline hover:bg-slate-50/50">
-                  <div className="flex items-center gap-3">
-                    <div className="p-2 bg-teal-50 rounded-lg">
-                      <BookOpen className="h-5 w-5 text-teal-600" />
-                    </div>
-                    <span className="font-bold text-slate-900">Publications</span>
-                    <Badge variant="secondary" className="ml-2 bg-slate-100">
-                      {(resume.data.publications || []).length}
-                    </Badge>
-                  </div>
-                </AccordionTrigger>
-                <AccordionContent className="p-6 pt-0 border-t border-slate-100 bg-white">
-                  <div className="space-y-6 pt-6">
-                    {(resume.data.publications || []).map((pub, idx) => (
-                      <Card key={pub.id} className="relative group border-slate-200">
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="absolute top-4 right-4 text-slate-400 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity"
-                          onClick={() => deletePublication(pub.id)}
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                        <CardHeader className="p-5 pb-2">
-                          <CardTitle className="text-sm font-medium text-slate-500 uppercase tracking-wider">
-                            Publication #{idx + 1}
-                          </CardTitle>
-                        </CardHeader>
-                        <CardContent className="p-5 space-y-4">
-                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                            <div className="sm:col-span-2 space-y-2">
-                              <Label>Title</Label>
-                              <Input
-                                value={pub.title}
-                                onChange={(e) => updatePublication(pub.id, "title", e.target.value)}
-                                placeholder="Journal paper title"
-                              />
-                            </div>
-                            <div className="space-y-2">
-                              <Label>Publisher / Journal</Label>
-                              <Input
-                                value={pub.publisher}
-                                onChange={(e) =>
-                                  updatePublication(pub.id, "publisher", e.target.value)
-                                }
-                                placeholder="IEEE / ACM"
-                              />
-                            </div>
-                            <div className="space-y-2">
-                              <Label>Date</Label>
-                              <Input
-                                value={pub.date}
-                                onChange={(e) => updatePublication(pub.id, "date", e.target.value)}
-                                placeholder="Nov 2023"
-                              />
-                            </div>
-                            <div className="sm:col-span-2 space-y-2">
-                              <Label>Link (Optional)</Label>
-                              <div className="flex items-center gap-2">
-                                <Link className="h-4 w-4 text-slate-400" />
-                                <Input
-                                  value={pub.link}
-                                  onChange={(e) =>
-                                    updatePublication(pub.id, "link", e.target.value)
-                                  }
-                                  placeholder="https://doi.org/10..."
-                                />
-                              </div>
-                            </div>
-                            <div className="sm:col-span-2 space-y-2">
-                              <Label>Description</Label>
-                              <textarea
-                                className="w-full min-h-[80px] p-3 rounded-lg border border-slate-200 bg-white text-sm focus:ring-2 focus:ring-primary focus:outline-none"
-                                value={pub.description}
-                                onChange={(e) =>
-                                  updatePublication(pub.id, "description", e.target.value)
-                                }
-                                placeholder="Summary of the publication..."
-                              />
-                            </div>
-                          </div>
-                        </CardContent>
-                      </Card>
-                    ))}
-                    <Button
-                      variant="outline"
-                      className="w-full py-8 border-dashed"
-                      onClick={addPublication}
-                    >
-                      <Plus className="h-5 w-5 mr-2" />
-                      Add Publication
-                    </Button>
-                  </div>
-                </AccordionContent>
-              </AccordionItem>
+                    )}
+                    {section.id === "certifications" && (
+                      <CertificationsSection
+                        certifications={resume.data.certifications || []}
+                        onUpdate={updateCertification}
+                        onAdd={addCertification}
+                        onDelete={deleteCertification}
+                      />
+                    )}
+                    {section.id === "organizations" && (
+                      <OrganizationsSection
+                        organizations={resume.data.organizations || []}
+                        onUpdate={updateOrganization}
+                        onAdd={addOrganization}
+                        onDelete={deleteOrganization}
+                      />
+                    )}
+                    {section.id === "publications" && (
+                      <PublicationsSection
+                        publications={resume.data.publications || []}
+                        onUpdate={updatePublication}
+                        onAdd={addPublication}
+                        onDelete={deletePublication}
+                      />
+                    )}
+                  </AccordionContent>
+                </AccordionItem>
+              ))}
             </Accordion>
           </div>
         </div>
 
-        {/* Preview Section */}
-        <div
-          className={cn(
-            "bg-slate-200/50 flex flex-col transition-all duration-300",
-            viewMode === "edit" ? "hidden" : "flex flex-1 md:flex-none",
-            viewMode === "split"
-              ? "w-full md:w-1/2 border-t md:border-t-0 md:border-l border-slate-300"
-              : "w-full"
-          )}
-        >
-          <div className="p-4 border-b border-slate-300 bg-white/50 backdrop-blur flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <Eye className="h-4 w-4 text-slate-500" />
-              <span className="text-sm font-bold text-slate-700 uppercase tracking-tight">
-                Live Preview
-              </span>
-            </div>
-            <div className="flex bg-slate-200/50 p-1 rounded-md">
-              <Button variant="ghost" size="icon" className="h-7 w-7">
-                <Monitor className="h-4 w-4" />
-              </Button>
-              <Button variant="ghost" size="icon" className="h-7 w-7">
-                <Smartphone className="h-4 w-4" />
-              </Button>
-            </div>
-          </div>
-
-          <div className="flex-1 overflow-auto p-8 flex justify-center bg-slate-500/10">
-            <Card
-              className="w-[210mm] min-h-[297mm] shadow-2xl origin-top transition-transform duration-500"
-              style={{ transform: viewMode === "split" ? "scale(0.8)" : "scale(1)" }}
-            >
-              <div className="p-0">
-                <ATSMinimal data={resume.data} />
-              </div>
-            </Card>
-          </div>
-        </div>
+        <EditorPreview
+          data={resume.data}
+          viewMode={viewMode}
+          previewDevice={previewDevice}
+          setPreviewDevice={setPreviewDevice}
+        />
       </main>
-
-      {/* Empty footer spacing for mobile */}
-      <footer className="h-16 md:hidden" />
     </div>
   );
 };

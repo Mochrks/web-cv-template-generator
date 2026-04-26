@@ -56,7 +56,7 @@ const ATSMinimal: React.FC<ATSMinimalProps> = ({ data }) => {
             <div key={exp.id} className="mb-4">
               <div className="flex justify-between mb-1">
                 <span className="font-bold text-[11pt]">{exp.position}</span>
-                <span className="text-[10pt] text-gray-600">
+                <span className="text-[10pt] font-bold">
                   {exp.startDate} - {exp.current ? "Present" : exp.endDate}
                 </span>
               </div>
@@ -90,7 +90,7 @@ const ATSMinimal: React.FC<ATSMinimalProps> = ({ data }) => {
                 <span className="font-bold text-[11pt]">
                   {edu.degree} in {edu.field}
                 </span>
-                <span className="text-[10pt] text-gray-600">
+                <span className="text-[10pt] font-bold">
                   {edu.startDate} - {edu.endDate}
                 </span>
               </div>
@@ -131,7 +131,12 @@ const ATSMinimal: React.FC<ATSMinimalProps> = ({ data }) => {
 
           {projects.map((project) => (
             <div key={project.id} className="mb-4">
-              <h3 className="font-bold text-[11pt] mb-1">{project.name}</h3>
+              <div className="flex justify-between mb-1">
+                <span className="font-bold text-[11pt]">{project.name}</span>
+                <span className="text-[10pt] font-bold">
+                  {project.startDate} - {project.endDate}
+                </span>
+              </div>
 
               <p className="text-[10pt] mb-1">{project.description}</p>
 
@@ -185,7 +190,7 @@ const ATSMinimal: React.FC<ATSMinimalProps> = ({ data }) => {
             <div key={org.id} className="mb-4">
               <div className="flex justify-between mb-1">
                 <span className="font-bold text-[11pt]">{org.name}</span>
-                <span className="text-[10pt] text-gray-600">
+                <span className="text-[10pt] font-bold">
                   {org.startDate} - {org.endDate}
                 </span>
               </div>
