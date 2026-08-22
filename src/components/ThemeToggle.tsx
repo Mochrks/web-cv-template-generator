@@ -43,18 +43,27 @@ export function ThemeToggle() {
           <span className="sr-only">Toggle theme</span>
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="min-w-[140px]">
-        <DropdownMenuItem onClick={() => setTheme("light")} className="cursor-pointer gap-2">
+      <DropdownMenuContent align="end" className="min-w-[140px] font-sans">
+        <DropdownMenuItem
+          onClick={() => setTheme("light")}
+          className="cursor-pointer gap-2 text-sm font-medium"
+        >
           <Sun className="h-4 w-4" />
           <span>Light</span>
           {theme === "light" && <span className="ml-auto text-xs text-muted-foreground">✓</span>}
         </DropdownMenuItem>
-        <DropdownMenuItem onClick={() => setTheme("dark")} className="cursor-pointer gap-2">
+        <DropdownMenuItem
+          onClick={() => setTheme("dark")}
+          className="cursor-pointer gap-2 text-sm font-medium"
+        >
           <Moon className="h-4 w-4" />
           <span>Dark</span>
           {theme === "dark" && <span className="ml-auto text-xs text-muted-foreground">✓</span>}
         </DropdownMenuItem>
-        <DropdownMenuItem onClick={() => setTheme("system")} className="cursor-pointer gap-2">
+        <DropdownMenuItem
+          onClick={() => setTheme("system")}
+          className="cursor-pointer gap-2 text-sm font-medium"
+        >
           <Monitor className="h-4 w-4" />
           <span>System</span>
           {theme === "system" && <span className="ml-auto text-xs text-muted-foreground">✓</span>}

@@ -95,7 +95,7 @@ export const EditorHeader: React.FC<EditorHeaderProps> = ({
           <DropdownMenuTrigger asChild>
             <Button
               size="sm"
-              className="h-9 px-5 rounded-xl font-bold bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg shadow-primary/20"
+              className="h-9 sm:w-auto px-5 font-bold bg-secondary hover:bg-secondary/90 text-white rounded-xl shadow-xl shadow-secondary/20 transition-all active:scale-95"
             >
               {isExporting ? (
                 <Loader2 className="h-4 w-4 animate-spin mr-2" />

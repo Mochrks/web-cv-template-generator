@@ -10,10 +10,20 @@ const inter = Inter({
 
 export default function App({ Component, pageProps }: AppProps) {
   return (
-    <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
-      <main className={`${inter.variable} font-sans`}>
-        <Component {...pageProps} />
-      </main>
-    </ThemeProvider>
+    <>
+      <style jsx global>{`
+        :root {
+          --font-inter: ${inter.style.fontFamily};
+        }
+        body {
+          font-family: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+        }
+      `}</style>
+      <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
+        <main className={`${inter.variable} font-sans`}>
+          <Component {...pageProps} />
+        </main>
+      </ThemeProvider>
+    </>
   );
 }
