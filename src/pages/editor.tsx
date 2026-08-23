@@ -423,7 +423,7 @@ const EditorPage: React.FC = () => {
               </h2>
               <Badge
                 variant="secondary"
-                className="bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20 font-bold px-3 py-1 animate-pulse"
+                className="bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20 font-bold px-3 py-1 animate-pulse hover:bg-emerald-500/20 dark:hover:bg-emerald-500/20 transition-colors cursor-default"
               >
                 Saved Automatically
               </Badge>
